@@ -1,0 +1,103 @@
+You are an expert full-stack AI developer. 
+Build a complete multi-language project named SMART Health Guide+ : An AI-Based Personal Medical Advisor System.
+
+🧱 Architecture:
+- Frontend: Java (JavaFX or Swing) GUI app
+- Backend: Python (Flask or FastAPI)
+- Database: MySQL (or Firebase alternative for demo)
+- Communication: REST API using JSON
+- ML models: Python scikit-learn + NLP chatbot + regression for cost estimation
+
+🎯 Core Modules (Backend in Python):
+1. Symptom-Based Disease Prediction
+   - Input: List of symptoms
+   - Output: Predicted disease + severity %
+   - Use Dataset: “Disease and Symptoms Dataset” (e.g., Kaggle’s Disease Prediction Dataset)
+   - Model: Multi-class classification (RandomForest or Naive Bayes)
+
+2. Chatbot Support
+   - Use: NLP chatbot (trained on medical FAQ dataset)
+   - Libraries: transformers / NLTK / spaCy
+   - Response: Short accurate answers to health questions
+
+3. Test Optimization
+   - Input: Predicted disease
+   - Output: Tests to do + Tests to avoid
+   - Logic: Rule-based JSON mapping (Disease → Suggested Tests)
+
+4. Cost Forecasting
+   - Input: Surgery/Treatment name, Hospital type
+   - Output: Estimated cost in ₹
+   - Model: Regression or static dataset from Indian hospital cost data (can simulate)
+
+5. Report Analyzer
+   - Input: Uploaded blood report values (JSON or CSV)
+   - Output: Flags abnormal fields, gives advice
+   - Logic: Compare with threshold ranges (e.g., Hemoglobin, WBC count, etc.)
+
+🔗 Integration Flow
+Java GUI → REST call → Python backend → Process → JSON Response → Display on GUI
+
+📁 Project Structure
+/SMART_Health_Guide
+ ├── /frontend_java/
+ │    ├── Main.java
+ │    ├── SymptomCheckerUI.java
+ │    ├── ChatbotUI.java
+ │    ├── ReportAnalyzerUI.java
+ │    └── ApiConnector.java  // handles REST calls to Python backend
+ ├── /backend_python/
+ │    ├── app.py  // Flask/FastAPI entry point
+ │    ├── symptom_predictor.py
+ │    ├── chatbot.py
+ │    ├── test_optimizer.py
+ │    ├── cost_forecast.py
+ │    ├── report_analyzer.py
+ │    ├── models/
+ │    │     ├── disease_model.pkl
+ │    │     └── cost_model.pkl
+ │    └── /datasets/
+ │           ├── disease_symptoms.csv
+ │           ├── medical_faq.csv
+ │           └── surgery_costs.csv
+ └── /docs/
+      ├── research_paper_outline.md
+      └── API_Documentation.md
+
+⚙ Requirements:
+Python Packages:
+- flask or fastapi
+- pandas, scikit-learn, numpy
+- nltk, transformers, joblib
+- mysql-connector-python
+
+Java Requirements:
+- JavaFX or Swing
+- Gson or Jackson for JSON parsing
+- Apache HttpClient for API requests
+
+🧠 Machine Learning Part
+- Train a classifier on disease-symptom dataset
+- Save model with joblib → disease_model.pkl
+- Create endpoint: /predict_disease
+- Add /chat, /optimize_tests, /forecast_cost, /analyze_report endpoints
+
+📄 Example API Routes:
+GET /chat?query="what is fever"
+POST /predict_disease { "symptoms": ["fever","headache","cough"] }
+POST /forecast_cost { "treatment": "appendix surgery", "hospital_type": "private" }
+POST /analyze_report { "hemoglobin": 10, "platelets": 120000, ... }
+
+🧪 Frontend Functionality
+Each module (buttons/pages) in Java calls respective API endpoints and shows results in a simple GUI.
+
+📚 Extra
+Generate demo datasets if real ones are missing.
+Add “research_paper_outline.md” describing:
+- Abstract
+- Problem Statement
+- Methodology (AI models, architecture)
+- Results (accuracy, response time)
+- Conclusion & Future Work
+
+Make sure all files are well-commented and modular.
