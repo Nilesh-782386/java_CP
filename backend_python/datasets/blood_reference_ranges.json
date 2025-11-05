@@ -1,0 +1,90 @@
+{
+  "hemoglobin": {
+    "name": "Hemoglobin",
+    "normalMin": 12.0,
+    "normalMax": 16.0,
+    "unit": "g/dL",
+    "low_threshold": 12.0,
+    "high_threshold": 16.0
+  },
+  "wbc": {
+    "name": "WBC Count",
+    "normalMin": 4000,
+    "normalMax": 11000,
+    "unit": "cells/µL",
+    "low_threshold": 4000,
+    "high_threshold": 11000
+  },
+  "platelets": {
+    "name": "Platelet Count",
+    "normalMin": 150000,
+    "normalMax": 450000,
+    "unit": "cells/µL",
+    "low_threshold": 150000,
+    "high_threshold": 450000
+  },
+  "rbc": {
+    "name": "RBC Count",
+    "normalMin": 4.5,
+    "normalMax": 5.5,
+    "unit": "million cells/µL",
+    "low_threshold": 4.5,
+    "high_threshold": 5.5
+  },
+  "blood_sugar_fasting": {
+    "name": "Blood Sugar (Fasting)",
+    "normalMin": 70,
+    "normalMax": 100,
+    "unit": "mg/dL",
+    "low_threshold": 70,
+    "high_threshold": 100
+  },
+  "total_cholesterol": {
+    "name": "Total Cholesterol",
+    "normalMin": 0,
+    "normalMax": 200,
+    "unit": "mg/dL",
+    "low_threshold": 0,
+    "high_threshold": 200
+  },
+  "hdl_cholesterol": {
+    "name": "HDL Cholesterol",
+    "normalMin": 40,
+    "normalMax": 100,
+    "unit": "mg/dL",
+    "low_threshold": 40,
+    "high_threshold": 100
+  },
+  "ldl_cholesterol": {
+    "name": "LDL Cholesterol",
+    "normalMin": 0,
+    "normalMax": 100,
+    "unit": "mg/dL",
+    "low_threshold": 0,
+    "high_threshold": 100
+  },
+  "creatinine": {
+    "name": "Creatinine",
+    "normalMin": 0.6,
+    "normalMax": 1.2,
+    "unit": "mg/dL",
+    "low_threshold": 0.6,
+    "high_threshold": 1.2
+  },
+  "sgot": {
+    "name": "SGOT (AST)",
+    "normalMin": 10,
+    "normalMax": 40,
+    "unit": "U/L",
+    "low_threshold": 10,
+    "high_threshold": 40
+  },
+  "sgpt": {
+    "name": "SGPT (ALT)",
+    "normalMin": 10,
+    "normalMax": 40,
+    "unit": "U/L",
+    "low_threshold": 10,
+    "high_threshold": 40
+  }
+}

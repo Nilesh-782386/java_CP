@@ -1,0 +1,113 @@
+package com.smartheal.models;
+
+import java.time.LocalDate;
+
+public class User {
+    private int id;
+    private String username;
+    private String email;
+    private String passwordHash;
+    private String fullName;
+    private LocalDate dateOfBirth;
+    private String gender;
+    private java.sql.Timestamp createdAt;
+
+    // Default constructor
+    public User() {}
+
+    // Constructor for registration
+    public User(String username, String email, String passwordHash, String fullName) {
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.fullName = fullName;
+    }
+
+    // Full constructor
+    public User(String username, String email, String passwordHash, String fullName, 
+                LocalDate dateOfBirth, String gender) {
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.fullName = fullName;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+    }
+
+    // Getters and Setters
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public java.sql.Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.sql.Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", gender='" + gender + '\'' +
+                '}';
+    }
+}
+

@@ -1,0 +1,102 @@
+[
+  {
+    "category": "General Health",
+    "keywords": [
+      "fever",
+      "temperature",
+      "body temperature"
+    ],
+    "question": "What is fever?",
+    "answer": "Fever is a temporary increase in body temperature, often a sign that your body is fighting an infection. Normal body temperature is around 98.6°F (37°C). If you have a fever above 100.4°F (38°C), rest, stay hydrated, and consider consulting a healthcare provider if it persists or is accompanied by severe symptoms."
+  },
+  {
+    "category": "General Health",
+    "keywords": [
+      "headache",
+      "head pain",
+      "migraine"
+    ],
+    "question": "What causes headaches?",
+    "answer": "Headaches can be caused by various factors including stress, dehydration, lack of sleep, eye strain, sinus problems, or underlying medical conditions. For mild headaches, try rest, hydration, and over-the-counter pain relievers. If headaches are severe, frequent, or sudden, consult a healthcare professional."
+  },
+  {
+    "category": "General Health",
+    "keywords": [
+      "cough",
+      "coughing",
+      "persistent cough"
+    ],
+    "question": "How to treat a cough?",
+    "answer": "Coughs can be caused by colds, allergies, or infections. For mild coughs, try staying hydrated, using a humidifier, and over-the-counter cough suppressants. If a cough persists for more than 2-3 weeks, is accompanied by fever or difficulty breathing, or produces blood, consult a healthcare provider."
+  },
+  {
+    "category": "Symptoms",
+    "keywords": [
+      "nausea",
+      "feeling sick",
+      "vomiting"
+    ],
+    "question": "What causes nausea?",
+    "answer": "Nausea can be caused by various factors including food poisoning, motion sickness, pregnancy, medications, or underlying medical conditions. For mild nausea, try eating small, bland meals, staying hydrated, and avoiding strong odors. If nausea is severe or persistent, consult a healthcare provider."
+  },
+  {
+    "category": "Symptoms",
+    "keywords": [
+      "fatigue",
+      "tiredness",
+      "exhaustion"
+    ],
+    "question": "Why am I always tired?",
+    "answer": "Fatigue can result from lack of sleep, poor diet, stress, anemia, thyroid problems, or other medical conditions. Ensure you get 7-9 hours of sleep, maintain a balanced diet, exercise regularly, and manage stress. If fatigue persists despite lifestyle changes, consult a healthcare provider."
+  },
+  {
+    "category": "Prevention",
+    "keywords": [
+      "immunity",
+      "immune system",
+      "boost immunity"
+    ],
+    "question": "How to boost immunity?",
+    "answer": "To support your immune system: maintain a balanced diet rich in fruits and vegetables, get regular exercise, ensure adequate sleep (7-9 hours), manage stress, stay hydrated, avoid smoking, and maintain good hygiene practices like handwashing."
+  },
+  {
+    "category": "Prevention",
+    "keywords": [
+      "vitamins",
+      "supplements",
+      "nutrition"
+    ],
+    "question": "What vitamins should I take?",
+    "answer": "Most people can get necessary vitamins from a balanced diet. However, some may benefit from supplements like Vitamin D, B12, or multivitamins. It's best to consult with a healthcare provider before starting any supplements, as they can assess your specific needs and avoid potential interactions."
+  },
+  {
+    "category": "Emergency",
+    "keywords": [
+      "chest pain",
+      "heart attack",
+      "emergency"
+    ],
+    "question": "When to seek emergency care?",
+    "answer": "Seek immediate emergency care for: severe chest pain, difficulty breathing, sudden severe headache, loss of consciousness, severe allergic reactions, or any life-threatening symptoms. Call emergency services immediately for these conditions."
+  },
+  {
+    "category": "General Health",
+    "keywords": [
+      "cold",
+      "common cold",
+      "flu"
+    ],
+    "question": "Cold vs Flu?",
+    "answer": "The common cold and flu are both respiratory illnesses but caused by different viruses. Flu symptoms are typically more severe and include fever, body aches, and fatigue. Colds are usually milder with symptoms like runny nose and sneezing. Rest, hydration, and over-the-counter medications can help manage symptoms. Consult a healthcare provider if symptoms are severe."
+  },
+  {
+    "category": "General Health",
+    "keywords": [
+      "hypertension",
+      "high blood pressure",
+      "bp"
+    ],
+    "question": "What is high blood pressure?",
+    "answer": "High blood pressure (hypertension) is when your blood pressure is consistently elevated. It's often called a 'silent killer' because it may not show symptoms. Risk factors include age, family history, obesity, and lifestyle factors. Management includes lifestyle changes (diet, exercise) and medications as prescribed by a healthcare provider. Regular monitoring is important."
+  }
+]

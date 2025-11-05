@@ -1,0 +1,37 @@
+{
+  "Appendectomy": {
+    "government": 15000,
+    "semi-private": 45000,
+    "private": 90000
+  },
+  "Surgery": {
+    "government": 20000,
+    "semi-private": 60000,
+    "private": 120000
+  },
+  "Medication": {
+    "government": 5000,
+    "semi-private": 12000,
+    "private": 25000
+  },
+  "Physical Therapy": {
+    "government": 3000,
+    "semi-private": 8000,
+    "private": 15000
+  },
+  "Chemotherapy": {
+    "government": 50000,
+    "semi-private": 150000,
+    "private": 300000
+  },
+  "Cardiac Surgery": {
+    "government": 100000,
+    "semi-private": 300000,
+    "private": 600000
+  },
+  "Orthopedic Surgery": {
+    "government": 40000,
+    "semi-private": 120000,
+    "private": 250000
+  }
+}

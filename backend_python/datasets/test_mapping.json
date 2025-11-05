@@ -1,0 +1,110 @@
+{
+  "1": {
+    "diseaseName": "Common Cold",
+    "reasoning": "For uncomplicated colds, minimal testing is needed. Tests help rule out complications like bacterial infections.",
+    "recommendedTests": [
+      {
+        "id": "1",
+        "name": "Complete Blood Count (CBC)",
+        "description": "Measures various components of blood including white blood cells",
+        "purpose": "To check for signs of bacterial infection or complications",
+        "costRange": "₹300 - ₹500",
+        "preparation": "Fasting not required"
+      },
+      {
+        "id": "2",
+        "name": "Throat Swab Culture",
+        "description": "Tests for bacterial infections like strep throat",
+        "purpose": "To rule out bacterial infections if symptoms persist",
+        "costRange": "₹400 - ₹600",
+        "preparation": "No preparation needed"
+      }
+    ],
+    "testsToAvoid": [
+      {
+        "id": "3",
+        "name": "Chest X-Ray",
+        "description": "Imaging test for chest conditions",
+        "purpose": "Not needed for uncomplicated colds without chest symptoms",
+        "costRange": "₹800 - ₹1200"
+      }
+    ]
+  },
+  "2": {
+    "diseaseName": "Influenza",
+    "reasoning": "Flu testing helps confirm diagnosis and guide treatment, especially for high-risk patients.",
+    "recommendedTests": [
+      {
+        "id": "4",
+        "name": "Rapid Influenza Test",
+        "description": "Quick test to detect influenza virus",
+        "purpose": "To confirm flu diagnosis and guide antiviral treatment",
+        "costRange": "₹600 - ₹800",
+        "preparation": "Nasal or throat swab"
+      },
+      {
+        "id": "5",
+        "name": "Complete Blood Count (CBC)",
+        "description": "Measures blood components",
+        "purpose": "To check for complications and monitor infection",
+        "costRange": "₹300 - ₹500",
+        "preparation": "Fasting not required"
+      }
+    ],
+    "testsToAvoid": [
+      {
+        "id": "6",
+        "name": "CT Scan",
+        "description": "Advanced imaging test",
+        "purpose": "Not necessary unless severe complications are suspected",
+        "costRange": "₹3000 - ₹5000"
+      }
+    ]
+  },
+  "3": {
+    "diseaseName": "Migraine",
+    "reasoning": "Migraines are typically diagnosed clinically. Tests help rule out other causes of headaches.",
+    "recommendedTests": [
+      {
+        "id": "7",
+        "name": "MRI of Brain",
+        "description": "Imaging test to visualize brain structure",
+        "purpose": "To rule out other causes of headaches if symptoms are atypical",
+        "costRange": "₹4000 - ₹8000",
+        "preparation": "No preparation needed, but inform about metal implants"
+      },
+      {
+        "id": "8",
+        "name": "Blood Pressure Monitoring",
+        "description": "Monitoring blood pressure over time",
+        "purpose": "To check for hypertension as a contributing factor",
+        "costRange": "₹200 - ₹400",
+        "preparation": "No preparation needed"
+      }
+    ],
+    "testsToAvoid": [
+      {
+        "id": "9",
+        "name": "Lumbar Puncture",
+        "description": "Spinal tap procedure",
+        "purpose": "Not needed for typical migraines",
+        "costRange": "₹2000 - ₹4000"
+      }
+    ]
+  },
+  "default": {
+    "diseaseName": "General Condition",
+    "reasoning": "Consult with a healthcare provider to determine appropriate tests based on your specific symptoms and medical history.",
+    "recommendedTests": [
+      {
+        "id": "10",
+        "name": "Complete Blood Count (CBC)",
+        "description": "Basic blood test measuring various components",
+        "purpose": "To check overall health and detect various conditions",
+        "costRange": "₹300 - ₹500",
+        "preparation": "Fasting not required"
+      }
+    ],
+    "testsToAvoid": []
+  }
+}

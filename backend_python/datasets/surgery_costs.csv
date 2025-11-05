@@ -1,0 +1,31 @@
+treatment,hospital_type,cost
+Appendectomy,government,7784
+Appendectomy,semi-private,26499
+Appendectomy,private,51963
+Surgery,government,11685
+Surgery,semi-private,32634
+Surgery,private,68434
+Medication,government,2878
+Medication,semi-private,8247
+Medication,private,13094
+Physical Therapy,government,1521
+Physical Therapy,semi-private,5426
+Physical Therapy,private,10333
+Chemotherapy,government,26672
+Chemotherapy,semi-private,116374
+Chemotherapy,private,185574
+Cardiac Surgery,government,59039
+Cardiac Surgery,semi-private,234051
+Cardiac Surgery,private,446617
+Orthopedic Surgery,government,26264
+Orthopedic Surgery,semi-private,82322
+Orthopedic Surgery,private,185743
+Dental Surgery,government,4434
+Dental Surgery,semi-private,12238
+Dental Surgery,private,27737
+Eye Surgery,government,6771
+Eye Surgery,semi-private,27270
+Eye Surgery,private,51096
+Gynecological Surgery,government,12389
+Gynecological Surgery,semi-private,36219
+Gynecological Surgery,private,57598

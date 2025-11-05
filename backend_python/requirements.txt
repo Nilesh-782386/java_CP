@@ -1,0 +1,27 @@
+# Flask for REST API
+flask==3.0.0
+flask-cors==4.0.0
+
+# Machine Learning
+scikit-learn==1.3.2
+pandas==2.1.4
+numpy==1.26.2
+joblib==1.3.2
+
+# NLP and Chatbot
+nltk==3.8.1
+transformers==4.36.2
+torch==2.1.2
+
+# Database (Optional - can use JSON for demo)
+mysql-connector-python==8.2.0
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+
+# OCR and Image Processing
+pytesseract==0.3.10
+opencv-python==4.8.1.78
+Pillow==10.1.0
+
