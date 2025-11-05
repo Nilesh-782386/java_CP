@@ -65,49 +65,57 @@ public class ModulePageWrapper extends BorderPane {
             "-fx-background-color: linear-gradient(to right, #0F766E, #14B8A6, #22D3EE); " +
             "-fx-effect: dropshadow(gaussian, rgba(15, 118, 110, 0.3), 10, 0, 0, 4);"
         );
+        headerBox.setManaged(true);
+        headerBox.setVisible(true);
+        headerBox.setOpacity(1.0);
 
-        // Back button
-        Button backButton = new Button("← Back to Dashboard");
+        // Back button - Clear and prominent
+        Button backButton = new Button("← Back");
         backButton.setStyle(
-            "-fx-background-color: rgba(255, 255, 255, 0.2); " +
-            "-fx-text-fill: white; " +
+            "-fx-background-color: #FFFFFF; " +
+            "-fx-text-fill: #0F766E; " +
             "-fx-font-weight: bold; " +
-            "-fx-font-size: 14px; " +
-            "-fx-padding: 10 20; " +
-            "-fx-background-radius: 10; " +
-            "-fx-border-color: rgba(255, 255, 255, 0.3); " +
+            "-fx-font-size: 15px; " +
+            "-fx-padding: 12 25; " +
+            "-fx-background-radius: 8; " +
+            "-fx-border-color: #0F766E; " +
             "-fx-border-width: 2; " +
-            "-fx-border-radius: 10; " +
-            "-fx-cursor: hand;"
+            "-fx-border-radius: 8; " +
+            "-fx-cursor: hand; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0, 0, 3);"
         );
+        backButton.setManaged(true);
+        backButton.setVisible(true);
+        backButton.setOpacity(1.0);
+        backButton.setMinWidth(120);
         backButton.setOnMouseEntered(e -> {
             backButton.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.3); " +
+                "-fx-background-color: linear-gradient(to bottom, #0F766E, #14B8A6); " +
                 "-fx-text-fill: white; " +
                 "-fx-font-weight: bold; " +
-                "-fx-font-size: 14px; " +
-                "-fx-padding: 10 20; " +
-                "-fx-background-radius: 10; " +
-                "-fx-border-color: rgba(255, 255, 255, 0.5); " +
+                "-fx-font-size: 15px; " +
+                "-fx-padding: 12 25; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #0F766E; " +
                 "-fx-border-width: 2; " +
-                "-fx-border-radius: 10; " +
+                "-fx-border-radius: 8; " +
                 "-fx-cursor: hand; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2);"
+                "-fx-effect: dropshadow(gaussian, rgba(15, 118, 110, 0.5), 10, 0, 0, 4);"
             );
         });
         backButton.setOnMouseExited(e -> {
             backButton.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.2); " +
-                "-fx-text-fill: white; " +
+                "-fx-background-color: #FFFFFF; " +
+                "-fx-text-fill: #0F766E; " +
                 "-fx-font-weight: bold; " +
-                "-fx-font-size: 14px; " +
-                "-fx-padding: 10 20; " +
-                "-fx-background-radius: 10; " +
-                "-fx-border-color: rgba(255, 255, 255, 0.3); " +
+                "-fx-font-size: 15px; " +
+                "-fx-padding: 12 25; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #0F766E; " +
                 "-fx-border-width: 2; " +
-                "-fx-border-radius: 10; " +
+                "-fx-border-radius: 8; " +
                 "-fx-cursor: hand; " +
-                "-fx-effect: none;"
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 6, 0, 0, 3);"
             );
         });
         backButton.setOnAction(e -> {

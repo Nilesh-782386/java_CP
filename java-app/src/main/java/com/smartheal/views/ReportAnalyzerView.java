@@ -64,11 +64,9 @@ public class ReportAnalyzerView extends BorderPane {
         this.historyDAO = new HistoryDAO();
         this.objectMapper = new ObjectMapper();
 
-        VBox headerBox = createHeader();
-        setTop(headerBox);
-
+        // No header - ModulePageWrapper handles it with back button
         HBox mainContent = new HBox(25);
-        mainContent.setPadding(new Insets(25));
+        mainContent.setPadding(new Insets(20));
         mainContent.setStyle("-fx-background-color: #F0F9FF;");
 
         VBox leftPanel = createLeftPanel();
@@ -81,30 +79,13 @@ public class ReportAnalyzerView extends BorderPane {
         setCenter(mainContent);
     }
 
-    private VBox createHeader() {
-        VBox headerBox = new VBox(12);
-        headerBox.getStyleClass().add("header-section");
-        headerBox.setPadding(new Insets(25, 25, 20, 25));
-
-        Label titleLabel = new Label("📊 Medical Report Analyzer");
-        titleLabel.getStyleClass().add("header-title");
-
-        Label descriptionLabel = new Label(
-            "Input your blood test values to receive educational feedback comparing them to standard reference ranges"
-        );
-        descriptionLabel.getStyleClass().add("header-description");
-
-        headerBox.getChildren().addAll(titleLabel, descriptionLabel, new DisclaimerBanner());
-
-        return headerBox;
-    }
-
     private VBox createLeftPanel() {
-        VBox leftPanel = new VBox(15);
+        VBox leftPanel = new VBox(12);
         leftPanel.getStyleClass().add("panel");
         leftPanel.setMinWidth(400);
         leftPanel.setMaxWidth(480);
-        VBox.setVgrow(leftPanel, Priority.ALWAYS);
+        leftPanel.setPrefWidth(450);
+        VBox.setVgrow(leftPanel, Priority.SOMETIMES);
 
         Label panelTitle = new Label("Blood Test Parameters");
         panelTitle.getStyleClass().add("panel-title");
@@ -140,7 +121,8 @@ public class ReportAnalyzerView extends BorderPane {
         manualLabel.setFont(Font.font("System", FontWeight.BOLD, 12));
         manualLabel.setTextFill(Color.GRAY);
 
-        VBox inputsBox = new VBox(15);
+        // Wrap inputs in ScrollPane for better fit
+        VBox inputsBox = new VBox(10);
         for (String[] param : BLOOD_PARAMETERS) {
             String key = param[0];
             String label = param[1];
@@ -161,7 +143,8 @@ public class ReportAnalyzerView extends BorderPane {
             HBox inputBox = new HBox(5);
             TextField inputField = new TextField();
             inputField.setPromptText("Enter " + label.toLowerCase());
-            inputField.setPrefHeight(35);
+            inputField.setPrefHeight(32);
+            inputField.setMaxHeight(32);
             inputFields.put(key, inputField);
 
             Label unitLabel = new Label(unit);
@@ -187,7 +170,17 @@ public class ReportAnalyzerView extends BorderPane {
 
         loadingIndicator = new ProgressIndicator();
         loadingIndicator.setVisible(false);
-        loadingIndicator.setPrefSize(30, 30);
+        loadingIndicator.setPrefSize(25, 25);
+
+        // Wrap inputs in ScrollPane to prevent overflow
+        ScrollPane inputsScrollPane = new ScrollPane(inputsBox);
+        inputsScrollPane.setFitToWidth(true);
+        inputsScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        inputsScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        inputsScrollPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        inputsScrollPane.setPrefHeight(300);
+        inputsScrollPane.setMaxHeight(350);
+        VBox.setVgrow(inputsScrollPane, Priority.ALWAYS);
 
         leftPanel.getChildren().addAll(
             panelTitle, 
@@ -196,7 +189,7 @@ public class ReportAnalyzerView extends BorderPane {
             uploadImageButton,
             orLabel,
             manualLabel,
-            inputsBox, 
+            inputsScrollPane, 
             analyzeButton, 
             loadingIndicator
         );
@@ -205,7 +198,7 @@ public class ReportAnalyzerView extends BorderPane {
     }
 
     private VBox createRightPanel() {
-        VBox rightPanel = new VBox(15);
+        VBox rightPanel = new VBox(12);
         rightPanel.getStyleClass().add("panel");
         rightPanel.setMinWidth(600);
         VBox.setVgrow(rightPanel, Priority.ALWAYS);
@@ -213,7 +206,7 @@ public class ReportAnalyzerView extends BorderPane {
         // Action buttons for results
         HBox actionButtonsBox = new HBox(8);
         actionButtonsBox.setAlignment(Pos.CENTER_RIGHT);
-        actionButtonsBox.setPadding(new Insets(10, 0, 10, 0));
+        actionButtonsBox.setPadding(new Insets(5, 0, 5, 0));
         
         exportButton = new Button("💾 Export");
         exportButton.setStyle("-fx-background-color: linear-gradient(to bottom, #3B82F6, #60A5FA); -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 6 12; -fx-cursor: hand;");
@@ -237,7 +230,10 @@ public class ReportAnalyzerView extends BorderPane {
         
         resultsPane = new ScrollPane();
         resultsPane.setFitToWidth(true);
-        resultsPane.setStyle("-fx-background-color: transparent;");
+        resultsPane.setFitToHeight(true);
+        resultsPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        resultsPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        resultsPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         VBox.setVgrow(resultsPane, Priority.ALWAYS);
 
         VBox emptyState = new VBox(10);
