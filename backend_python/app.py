@@ -15,6 +15,7 @@ from test_optimizer import TestOptimizer
 from cost_forecast import CostForecaster
 from report_analyzer import ReportAnalyzer
 from report_ocr import ReportOCR
+from risk_predictor import RiskPredictor
 
 # Load environment variables
 load_dotenv()
@@ -29,6 +30,15 @@ chatbot = MedicalChatbot()
 test_optimizer = TestOptimizer()
 cost_forecaster = CostForecaster()
 report_analyzer = ReportAnalyzer()
+
+# Initialize Risk Predictor with error handling
+try:
+    risk_predictor = RiskPredictor()
+    print("✅ Risk Predictor module initialized successfully!")
+except Exception as e:
+    print(f"⚠️  Warning: Risk Predictor module failed to initialize: {e}")
+    print("   Install dependencies: pip install xgboost")
+    risk_predictor = None
 
 # Initialize OCR module with error handling
 try:
@@ -197,6 +207,85 @@ def analyze_report():
         return jsonify(analysis)
     except Exception as e:
         print(f"ERROR in analyze_report: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/risk-assessment', methods=['POST'])
+def risk_assessment():
+    """
+    Assess personal disease risks (diabetes, heart disease, hypertension)
+    Request body: {
+        "age": 45,
+        "weight": 75,
+        "height": 170,
+        "symptoms": ["fatigue", "headache"],
+        "family_history": ["diabetes", "heart disease"],
+        "smoking": false,
+        "exercise": 1,
+        "alcohol": false
+    }
+    """
+    try:
+        if risk_predictor is None:
+            return jsonify({
+                "error": "Risk Predictor module not available",
+                "message": "Risk prediction feature is not available. Please install xgboost: pip install xgboost"
+            }), 503
+        
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Extract required fields
+        age = data.get('age')
+        weight = data.get('weight')
+        height = data.get('height')
+        
+        if age is None or weight is None or height is None:
+            return jsonify({"error": "Missing required fields: age, weight, height"}), 400
+        
+        # Extract optional fields
+        symptoms = data.get('symptoms', [])
+        family_history = data.get('family_history', [])
+        smoking = data.get('smoking', False)
+        exercise = data.get('exercise', 1)  # 0 = none, 1 = moderate, 2 = high
+        alcohol = data.get('alcohol', False)
+        sleep_hours = data.get('sleep_hours', None)  # Optional: hours of sleep
+        stress_level = data.get('stress_level', None)  # Optional: 0=low, 1=moderate, 2=high
+        diet_quality = data.get('diet_quality', None)  # Optional: 0=poor, 1=moderate, 2=good
+        
+        # Validate inputs
+        if not isinstance(age, (int, float)) or age < 18 or age > 100:
+            return jsonify({"error": "Age must be a number between 18 and 100"}), 400
+        if not isinstance(weight, (int, float)) or weight < 30 or weight > 200:
+            return jsonify({"error": "Weight must be a number between 30 and 200 kg"}), 400
+        if not isinstance(height, (int, float)) or height < 100 or height > 250:
+            return jsonify({"error": "Height must be a number between 100 and 250 cm"}), 400
+        
+        # Predict risks with enhanced features
+        result = risk_predictor.predict_risks(
+            age=int(age),
+            weight=float(weight),
+            height=float(height),
+            symptoms=symptoms if isinstance(symptoms, list) else [],
+            family_history=family_history if isinstance(family_history, list) else [],
+            smoking=bool(smoking),
+            exercise=int(exercise) if exercise in [0, 1, 2] else 1,
+            alcohol=bool(alcohol) if not isinstance(alcohol, (int, float)) else int(alcohol),
+            sleep_hours=float(sleep_hours) if sleep_hours is not None else None,
+            stress_level=int(stress_level) if stress_level is not None else None,
+            diet_quality=int(diet_quality) if diet_quality is not None else None
+        )
+        
+        return jsonify(result)
+        
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        print(f"ERROR in risk_assessment: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

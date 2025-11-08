@@ -247,6 +247,49 @@ public class ApiClient {
         }
     }
     
+    // Risk assessment (Enhanced with new features)
+    public com.smartheal.models.RiskAssessment assessRisk(
+            int age, double weight, double height,
+            java.util.List<String> symptoms,
+            java.util.List<String> familyHistory,
+            boolean smoking, int exercise, int alcohol,
+            Double sleepHours, Integer stressLevel, Integer dietQuality) throws IOException {
+        HttpPost request = new HttpPost(BASE_URL + "/risk-assessment");
+        Map<String, Object> body = new HashMap<>();
+        body.put("age", age);
+        body.put("weight", weight);
+        body.put("height", height);
+        body.put("symptoms", symptoms != null ? symptoms : new java.util.ArrayList<>());
+        body.put("family_history", familyHistory != null ? familyHistory : new java.util.ArrayList<>());
+        body.put("smoking", smoking);
+        body.put("exercise", exercise);
+        body.put("alcohol", alcohol);
+        if (sleepHours != null) {
+            body.put("sleep_hours", sleepHours);
+        }
+        if (stressLevel != null) {
+            body.put("stress_level", stressLevel);
+        }
+        if (dietQuality != null) {
+            body.put("diet_quality", dietQuality);
+        }
+        String jsonBody = objectMapper.writeValueAsString(body);
+        request.setEntity(new StringEntity(jsonBody, ContentType.APPLICATION_JSON));
+        
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            String json;
+            try {
+                json = EntityUtils.toString(response.getEntity());
+            } catch (Exception e) {
+                throw new IOException("Failed to parse response: " + e.getMessage(), e);
+            }
+            if (response.getCode() >= 400) {
+                throw new IOException("API Error: " + json);
+            }
+            return objectMapper.readValue(json, com.smartheal.models.RiskAssessment.class);
+        }
+    }
+    
     @SuppressWarnings("unchecked")
     public Map<String, Object> uploadReportImage(String base64Image) throws IOException {
         HttpPost request = new HttpPost(BASE_URL + "/upload-report-image");

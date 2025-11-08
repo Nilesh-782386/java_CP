@@ -139,6 +139,25 @@ public class DatabaseInitializer {
             stmt.execute(createCostHistoryTable);
             System.out.println("✅ Cost estimation history table created/verified");
             
+            // Create risk assessment history table
+            String createRiskHistoryTable = """
+                CREATE TABLE IF NOT EXISTS risk_history (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    user_id INT NOT NULL,
+                    age INT NOT NULL,
+                    weight DECIMAL(5, 2) NOT NULL,
+                    height DECIMAL(5, 2) NOT NULL,
+                    assessment_result JSON NOT NULL,
+                    assessment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    INDEX idx_user_id (user_id),
+                    INDEX idx_assessment_date (assessment_date)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """;
+            
+            stmt.execute(createRiskHistoryTable);
+            System.out.println("✅ Risk assessment history table created/verified");
+            
             System.out.println("✅ Database initialization completed successfully!");
             
         } catch (SQLException e) {

@@ -53,6 +53,7 @@ public class SmartHealApp extends Application {
     private TestLookupView testLookupView;
     private CostEstimatorView costEstimatorView;
     private ReportAnalyzerView reportAnalyzerView;
+    private RiskAssessmentView riskAssessmentView;
 
     @Override
     public void start(Stage primaryStage) {
@@ -224,6 +225,10 @@ public class SmartHealApp extends Application {
             System.out.println("Report Analyzer callback triggered!");
             Platform.runLater(() -> openReportAnalyzer());
         });
+        dashboardView.setOnRiskAssessmentClick(() -> {
+            System.out.println("Risk Assessment callback triggered!");
+            Platform.runLater(() -> openRiskAssessment());
+        });
         
         // Add menu bar to dashboard
         BorderPane dashboardContainer = new BorderPane();
@@ -335,6 +340,24 @@ public class SmartHealApp extends Application {
             "Report Analyzer",
             "📊",
             reportAnalyzerView,
+            this::backToDashboard
+        );
+        
+        switchToModule(wrapper);
+    }
+
+    private void openRiskAssessment() {
+        if (riskAssessmentView == null) {
+            riskAssessmentView = new RiskAssessmentView(apiClient);
+            if (currentUser != null) {
+                riskAssessmentView.setCurrentUserId(currentUser.getId());
+            }
+        }
+        
+        ModulePageWrapper wrapper = new ModulePageWrapper(
+            "Risk Assessment",
+            "⚠️",
+            riskAssessmentView,
             this::backToDashboard
         );
         

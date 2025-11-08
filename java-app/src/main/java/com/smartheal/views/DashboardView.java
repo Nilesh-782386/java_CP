@@ -19,6 +19,7 @@ public class DashboardView extends BorderPane {
     private Runnable onTestLookupClick;
     private Runnable onCostEstimatorClick;
     private Runnable onReportAnalyzerClick;
+    private Runnable onRiskAssessmentClick;
     
     // Store card references to update click handlers
     private VBox symptomCard;
@@ -26,6 +27,7 @@ public class DashboardView extends BorderPane {
     private VBox testLookupCard;
     private VBox costEstimatorCard;
     private VBox reportAnalyzerCard;
+    private VBox riskAssessmentCard;
 
     public DashboardView() {
         createDashboard();
@@ -139,12 +141,22 @@ public class DashboardView extends BorderPane {
             "REPORT_ANALYZER"
         );
 
-        // Add cards to grid (2 rows, 3 columns with 5 items)
+        // Risk Assessment Card
+        riskAssessmentCard = createModuleCard(
+            "⚠️",
+            "Risk Assessment",
+            "Calculate your personal disease risks using AI. Get predictions for diabetes, heart disease, and hypertension",
+            "#F59E0B",
+            "RISK_ASSESSMENT"
+        );
+
+        // Add cards to grid (2 rows, 3 columns with 6 items)
         gridPane.add(symptomCard, 0, 0);
         gridPane.add(chatbotCard, 1, 0);
         gridPane.add(testLookupCard, 2, 0);
         gridPane.add(costEstimatorCard, 0, 1);
         gridPane.add(reportAnalyzerCard, 1, 1);
+        gridPane.add(riskAssessmentCard, 2, 1);
 
         // Set column constraints for equal width
         ColumnConstraints col1 = new ColumnConstraints();
@@ -279,6 +291,9 @@ public class DashboardView extends BorderPane {
             case "REPORT_ANALYZER":
                 callback = onReportAnalyzerClick;
                 break;
+            case "RISK_ASSESSMENT":
+                callback = onRiskAssessmentClick;
+                break;
         }
         
         final Runnable finalCallback = callback; // Make effectively final for lambda
@@ -361,6 +376,14 @@ public class DashboardView extends BorderPane {
         this.onReportAnalyzerClick = callback;
         if (reportAnalyzerCard != null) {
             setupCardClickHandler(reportAnalyzerCard, "REPORT_ANALYZER", "Report Analyzer");
+        }
+    }
+
+    public void setOnRiskAssessmentClick(Runnable callback) {
+        System.out.println("Setting Risk Assessment callback: " + (callback != null ? "OK" : "NULL"));
+        this.onRiskAssessmentClick = callback;
+        if (riskAssessmentCard != null) {
+            setupCardClickHandler(riskAssessmentCard, "RISK_ASSESSMENT", "Risk Assessment");
         }
     }
 

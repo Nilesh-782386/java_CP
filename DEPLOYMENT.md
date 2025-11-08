@@ -83,3 +83,5 @@ curl http://localhost:5000/health
 ## 6) Production Notes
 - Flask dev server is for development; use a WSGI server (gunicorn + waitress/uvicorn) behind a reverse proxy in production
 - Ensure Tesseract is installed on the host if OCR is required
+
+

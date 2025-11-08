@@ -118,8 +118,5 @@ Create `.vscode/settings.json` in `java-app` folder:
     "maven.executable.path": "mvn"
 }
 ```
-
 ---
-
 That's it! The application should now run in VS Code! 🚀
-

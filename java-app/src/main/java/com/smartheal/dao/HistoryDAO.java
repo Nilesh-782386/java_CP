@@ -243,5 +243,64 @@ public class HistoryDAO {
         
         return history;
     }
+    
+    /**
+     * Save risk assessment history
+     */
+    public boolean saveRiskHistory(int userId, int age, double weight, double height, String assessmentResultJson) {
+        String sql = "INSERT INTO risk_history (user_id, age, weight, height, assessment_result) VALUES (?, ?, ?, ?, ?)";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, userId);
+            stmt.setInt(2, age);
+            stmt.setDouble(3, weight);
+            stmt.setDouble(4, height);
+            stmt.setString(5, assessmentResultJson);
+            
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+            
+        } catch (SQLException e) {
+            System.err.println("Error saving risk history: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Get risk assessment history for user
+     */
+    public List<Map<String, Object>> getRiskHistory(int userId, int limit) {
+        String sql = "SELECT * FROM risk_history WHERE user_id = ? ORDER BY assessment_date DESC LIMIT ?";
+        List<Map<String, Object>> history = new ArrayList<>();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, userId);
+            stmt.setInt(2, limit);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> record = new HashMap<>();
+                    record.put("id", rs.getInt("id"));
+                    record.put("age", rs.getInt("age"));
+                    record.put("weight", rs.getDouble("weight"));
+                    record.put("height", rs.getDouble("height"));
+                    record.put("assessmentResult", rs.getString("assessment_result"));
+                    record.put("assessmentDate", rs.getTimestamp("assessment_date"));
+                    history.add(record);
+                }
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error getting risk history: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return history;
+    }
 }
 
