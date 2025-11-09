@@ -7,6 +7,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+from datetime import datetime
+import pandas as pd
 
 # Import modules
 from symptom_predictor import SymptomPredictor
@@ -16,6 +18,8 @@ from cost_forecast import CostForecaster
 from report_analyzer import ReportAnalyzer
 from report_ocr import ReportOCR
 from risk_predictor import RiskPredictor
+from advanced_risk_predictor import advanced_predictor
+from health_coach_ai import health_coach
 
 # Load environment variables
 load_dotenv()
@@ -210,6 +214,133 @@ def analyze_report():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+
+def preprocess_user_data(user_data):
+    """Convert user data payload into model-ready features."""
+    if not isinstance(user_data, dict):
+        return pd.DataFrame([{}])
+
+    features = {}
+    feature_mapping = {
+        'age': 'age',
+        'bmi': 'bmi',
+        'systolic_bp': 'blood_pressure',
+        'glucose': 'glucose',
+        'cholesterol': 'cholesterol',
+        'weight': 'weight',
+        'height': 'height',
+        'sleep_hours': 'sleep_hours',
+        'stress_level': 'stress_level',
+        'diet_quality': 'diet_quality',
+        'exercise': 'exercise',
+        'smoking': 'smoking',
+        'alcohol': 'alcohol',
+        'vegetable_servings': 'vegetable_servings',
+        'processed_meals_per_week': 'processed_meals_per_week',
+        'hydration_glasses': 'hydration_glasses',
+        'caffeine_intake': 'caffeine_intake',
+        'moderate_activity_minutes': 'moderate_activity_minutes',
+        'vigorous_activity_minutes': 'vigorous_activity_minutes',
+        'strength_training_sessions': 'strength_training_sessions',
+        'sedentary_hours': 'sedentary_hours',
+        'sleep_quality': 'sleep_quality',
+        'sleep_consistency': 'sleep_consistency',
+        'snoring': 'snoring',
+        'stress_coping': 'stress_coping',
+        'work_hours': 'work_hours',
+        'mood_stability': 'mood_stability',
+        'medication_adherence': 'medication_adherence',
+        'medication_side_effects': 'medication_side_effects',
+        'smoking_intensity': 'smoking_intensity',
+        'vaping': 'vaping',
+        'environmental_exposure': 'environmental_exposure',
+        'shift_work': 'shift_work',
+        'last_checkup_months': 'last_checkup_months',
+        'vaccination_status': 'vaccination_status'
+    }
+
+    for incoming, model_key in feature_mapping.items():
+        value = user_data.get(incoming)
+        if isinstance(value, bool):
+            value = int(value)
+        features[model_key] = value if value is not None else None
+
+    baseline_mapping = {
+        'baseline_diabetes_risk': 'baseline_diabetes_risk',
+        'baseline_heart_disease_risk': 'baseline_heart_disease_risk',
+        'baseline_hypertension_risk': 'baseline_hypertension_risk',
+        'baseline_health_score': 'baseline_health_score'
+    }
+
+    for incoming, model_key in baseline_mapping.items():
+        value = user_data.get(incoming)
+        features[model_key] = value if value is not None else None
+
+    return pd.DataFrame([features])
+
+
+@app.route('/api/advanced-risk-assessment', methods=['POST'])
+def advanced_risk_assessment():
+    """Advanced risk assessment with ensemble models and confidence intervals."""
+    try:
+        payload = request.get_json()
+        if not payload:
+            return jsonify({"error": "No data provided"}), 400
+
+        features = preprocess_user_data(payload)
+        result = advanced_predictor.predict_with_confidence(features)
+        predictions = result.get('predictions', {})
+
+        response = {
+            'predictions': predictions,
+            'model_type': 'ensemble_advanced',
+            'timestamp': datetime.now().isoformat(),
+            'metadata': {
+                'confidence_calculation': 'bootstrap_95CI',
+                'uncertainty_threshold': 0.3,
+                'ensemble_weights': {'xgb': 0.4, 'lgb': 0.4, 'nn': 0.2}
+            },
+            'lifestyle_summary': result.get('lifestyle_summary', {}),
+            'disease_impacts': result.get('disease_impacts', {}),
+            'overall_focus': result.get('overall_focus', []),
+            'protective_factors': result.get('protective_factors', []),
+            'data_quality': result.get('data_quality', {})
+        }
+        return jsonify(response)
+    except Exception as exc:
+        print(f"Advanced risk assessment error: {exc}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(exc)}), 500
+
+
+@app.route('/api/health-coach-plan', methods=['POST'])
+def health_coach_plan():
+    """Generate personalised 30-day health improvement plan."""
+    try:
+        payload = request.get_json() or {}
+
+        user_profile = {
+            'age': payload.get('age'),
+            'bmi': payload.get('bmi'),
+            'health_score': payload.get('health_score', 65),
+            'existing_conditions': payload.get('existing_conditions', [])
+        }
+        risk_predictions = payload.get('risk_predictions', {})
+
+        plan = health_coach.generate_personalized_plan(user_profile, risk_predictions)
+
+        return jsonify({
+            'success': True,
+            'plan': plan,
+            'generated_at': datetime.now().isoformat()
+        })
+    except Exception as exc:
+        print(f"Health coach plan error: {exc}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(exc)}), 500
 
 
 @app.route('/api/risk-assessment', methods=['POST'])

@@ -1,15 +1,19 @@
 package com.smartheal.views;
 
+import com.smartheal.api.AdvancedApiClient;
 import com.smartheal.api.ApiClient;
+import com.smartheal.api.HealthCoachApiClient;
 import com.smartheal.dao.HistoryDAO;
 import com.smartheal.models.RiskAssessment;
 import com.smartheal.models.Recommendation;
 import com.smartheal.models.Symptom;
+import com.smartheal.components.ConfidenceIndicator;
 import com.smartheal.utils.NotificationHelper;
 import com.smartheal.utils.FileExporter;
 import com.smartheal.utils.ReportFormatter;
 import com.smartheal.utils.JSONExporter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import javafx.scene.layout.StackPane;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -22,13 +26,19 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 public class RiskAssessmentView extends BorderPane {
     private final ApiClient apiClient;
@@ -50,6 +60,28 @@ public class RiskAssessmentView extends BorderPane {
     private TextField sleepHoursField;
     private ComboBox<String> stressLevelCombo;
     private ComboBox<String> dietQualityCombo;
+    private TextField vegetableServingsField;
+    private TextField processedMealsField;
+    private TextField hydrationField;
+    private ComboBox<String> caffeineIntakeCombo;
+    private TextField moderateActivityField;
+    private TextField vigorousActivityField;
+    private TextField strengthSessionsField;
+    private TextField sedentaryHoursField;
+    private ComboBox<String> sleepQualityCombo;
+    private ComboBox<String> sleepConsistencyCombo;
+    private CheckBox snoringCheckBox;
+    private ComboBox<String> stressCopingCombo;
+    private TextField workHoursField;
+    private ComboBox<String> moodStabilityCombo;
+    private ComboBox<String> medicationAdherenceCombo;
+    private CheckBox medicationSideEffectsCheckBox;
+    private ComboBox<String> smokingIntensityCombo;
+    private CheckBox vapingCheckBox;
+    private ComboBox<String> environmentExposureCombo;
+    private CheckBox shiftWorkCheckBox;
+    private TextField lastCheckupField;
+    private ComboBox<String> vaccinationStatusCombo;
     private ListView<String> symptomsList;
     private ObservableList<String> selectedSymptoms;
     private ListView<String> familyHistoryList;
@@ -68,6 +100,15 @@ public class RiskAssessmentView extends BorderPane {
     private Button exportButton;
     private Button exportJsonButton;
     private Button copyButton;
+    private VBox confidenceIndicators;
+    private HBox uncertaintyAlert;
+    private boolean healthCoachPlanShown;
+    private VBox healthCoachSummaryBox;
+    private VBox lifestyleInsightsBox;
+    private VBox dataQualitySummaryBox;
+    private JSONObject lastHealthCoachPlan;
+    private JSONObject lastAdvancedResponse;
+    private Map<String, Object> lastLifestyleInputs;
     
     // Store input data for export
     private int lastAge;
@@ -86,6 +127,10 @@ public class RiskAssessmentView extends BorderPane {
         this.selectedSymptoms = FXCollections.observableArrayList();
         this.familyHistory = FXCollections.observableArrayList();
         this.allSymptoms = new ArrayList<>();
+        this.healthCoachPlanShown = false;
+        this.lastHealthCoachPlan = null;
+        this.lastAdvancedResponse = null;
+        this.lastLifestyleInputs = new HashMap<>();
 
         HBox mainContent = new HBox(20);
         mainContent.setPadding(new Insets(15));
@@ -221,7 +266,250 @@ public class RiskAssessmentView extends BorderPane {
         HBox.setHgrow(dietQualityCombo, Priority.ALWAYS);
         dietBox.getChildren().addAll(dietLabel, dietQualityCombo);
 
-        lifestyleBox.getChildren().addAll(lifestyleLabel, smokingCheckBox, exerciseBox, alcoholBox, sleepBox, stressBox, dietBox);
+        Label nutritionDetailLabel = new Label("Nutrition & Hydration Details");
+        nutritionDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        nutritionDetailLabel.setTextFill(Color.web("#0F172A"));
+
+        HBox vegetableBox = new HBox(10);
+        vegetableBox.setAlignment(Pos.CENTER_LEFT);
+        Label vegetableLabel = new Label("Fruit & Veg servings/day:");
+        vegetableLabel.setMinWidth(180);
+        vegetableServingsField = new TextField();
+        vegetableServingsField.setPromptText("e.g., 4");
+        vegetableServingsField.setPrefWidth(120);
+        vegetableBox.getChildren().addAll(vegetableLabel, vegetableServingsField);
+
+        HBox processedBox = new HBox(10);
+        processedBox.setAlignment(Pos.CENTER_LEFT);
+        Label processedLabel = new Label("Processed meals/week:");
+        processedLabel.setMinWidth(180);
+        processedMealsField = new TextField();
+        processedMealsField.setPromptText("e.g., 2");
+        processedMealsField.setPrefWidth(120);
+        processedBox.getChildren().addAll(processedLabel, processedMealsField);
+
+        HBox hydrationBox = new HBox(10);
+        hydrationBox.setAlignment(Pos.CENTER_LEFT);
+        Label hydrationLabel = new Label("Water intake (glasses/day):");
+        hydrationLabel.setMinWidth(180);
+        hydrationField = new TextField();
+        hydrationField.setPromptText("e.g., 8");
+        hydrationField.setPrefWidth(120);
+        hydrationBox.getChildren().addAll(hydrationLabel, hydrationField);
+
+        HBox caffeineBox = new HBox(10);
+        caffeineBox.setAlignment(Pos.CENTER_LEFT);
+        Label caffeineLabel = new Label("Caffeine intake:");
+        caffeineLabel.setMinWidth(180);
+        caffeineIntakeCombo = new ComboBox<>();
+        caffeineIntakeCombo.getItems().addAll("None", "Low (≤1 cup/day)", "Moderate (2 cups/day)", "High (3+ cups/day)");
+        caffeineIntakeCombo.setValue("Moderate (2 cups/day)");
+        caffeineIntakeCombo.setPrefWidth(200);
+        caffeineBox.getChildren().addAll(caffeineLabel, caffeineIntakeCombo);
+
+        Label activityDetailLabel = new Label("Physical Activity & Sedentary Pattern");
+        activityDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        activityDetailLabel.setTextFill(Color.web("#0F172A"));
+
+        HBox moderateActivityBox = new HBox(10);
+        moderateActivityBox.setAlignment(Pos.CENTER_LEFT);
+        Label moderateActivityLabel = new Label("Moderate activity (min/week):");
+        moderateActivityLabel.setMinWidth(220);
+        moderateActivityField = new TextField();
+        moderateActivityField.setPromptText("e.g., 120");
+        moderateActivityField.setPrefWidth(140);
+        moderateActivityBox.getChildren().addAll(moderateActivityLabel, moderateActivityField);
+
+        HBox vigorousActivityBox = new HBox(10);
+        vigorousActivityBox.setAlignment(Pos.CENTER_LEFT);
+        Label vigorousActivityLabel = new Label("Vigorous activity (min/week):");
+        vigorousActivityLabel.setMinWidth(220);
+        vigorousActivityField = new TextField();
+        vigorousActivityField.setPromptText("e.g., 45");
+        vigorousActivityField.setPrefWidth(140);
+        vigorousActivityBox.getChildren().addAll(vigorousActivityLabel, vigorousActivityField);
+
+        HBox strengthBox = new HBox(10);
+        strengthBox.setAlignment(Pos.CENTER_LEFT);
+        Label strengthLabel = new Label("Strength sessions/week:");
+        strengthLabel.setMinWidth(220);
+        strengthSessionsField = new TextField();
+        strengthSessionsField.setPromptText("e.g., 2");
+        strengthSessionsField.setPrefWidth(140);
+        strengthBox.getChildren().addAll(strengthLabel, strengthSessionsField);
+
+        HBox sedentaryBox = new HBox(10);
+        sedentaryBox.setAlignment(Pos.CENTER_LEFT);
+        Label sedentaryLabel = new Label("Sitting time (hours/day):");
+        sedentaryLabel.setMinWidth(220);
+        sedentaryHoursField = new TextField();
+        sedentaryHoursField.setPromptText("e.g., 8");
+        sedentaryHoursField.setPrefWidth(140);
+        sedentaryBox.getChildren().addAll(sedentaryLabel, sedentaryHoursField);
+
+        Label sleepDetailLabel = new Label("Sleep Quality & Recovery");
+        sleepDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        sleepDetailLabel.setTextFill(Color.web("#0F172A"));
+
+        HBox sleepQualityBox = new HBox(10);
+        sleepQualityBox.setAlignment(Pos.CENTER_LEFT);
+        Label sleepQualityLabel = new Label("Sleep quality rating:");
+        sleepQualityLabel.setMinWidth(180);
+        sleepQualityCombo = new ComboBox<>();
+        sleepQualityCombo.getItems().addAll("Poor", "Fair", "Good", "Excellent");
+        sleepQualityCombo.setValue("Good");
+        sleepQualityCombo.setPrefWidth(180);
+        sleepQualityBox.getChildren().addAll(sleepQualityLabel, sleepQualityCombo);
+
+        HBox sleepConsistencyBox = new HBox(10);
+        sleepConsistencyBox.setAlignment(Pos.CENTER_LEFT);
+        Label sleepConsistencyLabel = new Label("Sleep schedule consistency:");
+        sleepConsistencyLabel.setMinWidth(220);
+        sleepConsistencyCombo = new ComboBox<>();
+        sleepConsistencyCombo.getItems().addAll("Irregular", "Somewhat regular", "Consistent", "Highly consistent");
+        sleepConsistencyCombo.setValue("Somewhat regular");
+        sleepConsistencyCombo.setPrefWidth(200);
+        sleepConsistencyBox.getChildren().addAll(sleepConsistencyLabel, sleepConsistencyCombo);
+
+        snoringCheckBox = new CheckBox("Snoring or suspected apnea symptoms");
+        snoringCheckBox.setFont(Font.font("System", 13));
+
+        Label mentalDetailLabel = new Label("Stress & Mental Wellbeing");
+        mentalDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        mentalDetailLabel.setTextFill(Color.web("#0F172A"));
+
+        HBox stressCopingBox = new HBox(10);
+        stressCopingBox.setAlignment(Pos.CENTER_LEFT);
+        Label stressCopingLabel = new Label("Stress coping ability:");
+        stressCopingLabel.setMinWidth(200);
+        stressCopingCombo = new ComboBox<>();
+        stressCopingCombo.getItems().addAll("Struggling", "Managing", "Strong toolkit");
+        stressCopingCombo.setValue("Managing");
+        stressCopingCombo.setPrefWidth(180);
+        stressCopingBox.getChildren().addAll(stressCopingLabel, stressCopingCombo);
+
+        HBox workHoursBox = new HBox(10);
+        workHoursBox.setAlignment(Pos.CENTER_LEFT);
+        Label workHoursLabel = new Label("Average work hours/week:");
+        workHoursLabel.setMinWidth(220);
+        workHoursField = new TextField();
+        workHoursField.setPromptText("e.g., 45");
+        workHoursField.setPrefWidth(140);
+        workHoursBox.getChildren().addAll(workHoursLabel, workHoursField);
+
+        HBox moodBox = new HBox(10);
+        moodBox.setAlignment(Pos.CENTER_LEFT);
+        Label moodLabel = new Label("Mood stability:");
+        moodLabel.setMinWidth(180);
+        moodStabilityCombo = new ComboBox<>();
+        moodStabilityCombo.getItems().addAll("Low", "Variable", "Stable", "Very stable");
+        moodStabilityCombo.setValue("Stable");
+        moodStabilityCombo.setPrefWidth(160);
+        moodBox.getChildren().addAll(moodLabel, moodStabilityCombo);
+
+        Label medicationDetailLabel = new Label("Medication & Preventive Care");
+        medicationDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        medicationDetailLabel.setTextFill(Color.web("#0F172A"));
+
+        HBox medicationAdherenceBox = new HBox(10);
+        medicationAdherenceBox.setAlignment(Pos.CENTER_LEFT);
+        Label medicationAdherenceLabel = new Label("Medication adherence:");
+        medicationAdherenceLabel.setMinWidth(200);
+        medicationAdherenceCombo = new ComboBox<>();
+        medicationAdherenceCombo.getItems().addAll("Rarely follow plan", "Miss doses sometimes", "Mostly adherent", "Always on schedule");
+        medicationAdherenceCombo.setValue("Mostly adherent");
+        medicationAdherenceCombo.setPrefWidth(220);
+        medicationAdherenceBox.getChildren().addAll(medicationAdherenceLabel, medicationAdherenceCombo);
+
+        medicationSideEffectsCheckBox = new CheckBox("Experiencing medication side effects");
+        medicationSideEffectsCheckBox.setFont(Font.font("System", 13));
+
+        HBox lastCheckupBox = new HBox(10);
+        lastCheckupBox.setAlignment(Pos.CENTER_LEFT);
+        Label lastCheckupLabel = new Label("Last full check-up (months):");
+        lastCheckupLabel.setMinWidth(220);
+        lastCheckupField = new TextField();
+        lastCheckupField.setPromptText("e.g., 12");
+        lastCheckupField.setPrefWidth(140);
+        lastCheckupBox.getChildren().addAll(lastCheckupLabel, lastCheckupField);
+
+        HBox vaccinationBox = new HBox(10);
+        vaccinationBox.setAlignment(Pos.CENTER_LEFT);
+        Label vaccinationLabel = new Label("Vaccination status:");
+        vaccinationLabel.setMinWidth(200);
+        vaccinationStatusCombo = new ComboBox<>();
+        vaccinationStatusCombo.getItems().addAll("Unsure / overdue", "Partially up to date", "Fully up to date");
+        vaccinationStatusCombo.setValue("Partially up to date");
+        vaccinationStatusCombo.setPrefWidth(200);
+        vaccinationBox.getChildren().addAll(vaccinationLabel, vaccinationStatusCombo);
+
+        Label exposureDetailLabel = new Label("Substance & Environment Exposure");
+        exposureDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        exposureDetailLabel.setTextFill(Color.web("#0F172A"));
+
+        HBox smokingIntensityBox = new HBox(10);
+        smokingIntensityBox.setAlignment(Pos.CENTER_LEFT);
+        Label smokingIntensityLabel = new Label("Smoking intensity:");
+        smokingIntensityLabel.setMinWidth(200);
+        smokingIntensityCombo = new ComboBox<>();
+        smokingIntensityCombo.getItems().addAll("None", "Occasional (<5/day)", "Daily (5-10/day)", "Heavy (>10/day)");
+        smokingIntensityCombo.setValue("None");
+        smokingIntensityCombo.setPrefWidth(200);
+        smokingIntensityBox.getChildren().addAll(smokingIntensityLabel, smokingIntensityCombo);
+
+        vapingCheckBox = new CheckBox("Currently vaping or using e-cigarettes");
+        vapingCheckBox.setFont(Font.font("System", 13));
+
+        HBox environmentExposureBox = new HBox(10);
+        environmentExposureBox.setAlignment(Pos.CENTER_LEFT);
+        Label environmentExposureLabel = new Label("Work/environment exposure:");
+        environmentExposureLabel.setMinWidth(220);
+        environmentExposureCombo = new ComboBox<>();
+        environmentExposureCombo.getItems().addAll("Low exposure", "Moderate exposure", "High exposure");
+        environmentExposureCombo.setValue("Moderate exposure");
+        environmentExposureCombo.setPrefWidth(200);
+        environmentExposureBox.getChildren().addAll(environmentExposureLabel, environmentExposureCombo);
+
+        shiftWorkCheckBox = new CheckBox("Shift work / rotating night shifts");
+        shiftWorkCheckBox.setFont(Font.font("System", 13));
+
+        lifestyleBox.getChildren().addAll(
+            lifestyleLabel,
+            smokingCheckBox,
+            smokingIntensityBox,
+            vapingCheckBox,
+            exerciseBox,
+            alcoholBox,
+            dietBox,
+            nutritionDetailLabel,
+            vegetableBox,
+            processedBox,
+            hydrationBox,
+            caffeineBox,
+            activityDetailLabel,
+            moderateActivityBox,
+            vigorousActivityBox,
+            strengthBox,
+            sedentaryBox,
+            sleepDetailLabel,
+            sleepBox,
+            sleepQualityBox,
+            sleepConsistencyBox,
+            snoringCheckBox,
+            mentalDetailLabel,
+            stressBox,
+            stressCopingBox,
+            workHoursBox,
+            moodBox,
+            medicationDetailLabel,
+            medicationAdherenceBox,
+            medicationSideEffectsCheckBox,
+            lastCheckupBox,
+            vaccinationBox,
+            exposureDetailLabel,
+            environmentExposureBox,
+            shiftWorkCheckBox
+        );
 
         // Symptoms Section
         VBox symptomsBox = new VBox(10);
@@ -449,6 +737,7 @@ public class RiskAssessmentView extends BorderPane {
             assessButton.setDisable(true);
             loadingIndicator.setVisible(true);
             resultsContainer.getChildren().clear();
+            healthCoachPlanShown = false;
 
             // Get exercise level (0 = none, 1 = moderate, 2 = high)
             final int exerciseLevel = exerciseCombo.getSelectionModel().getSelectedIndex();
@@ -475,11 +764,27 @@ public class RiskAssessmentView extends BorderPane {
             
             final int stressLevel = stressLevelCombo.getSelectionModel().getSelectedIndex();
             final int dietQuality = dietQualityCombo.getSelectionModel().getSelectedIndex();
-            
+
+            Map<String, Object> lifestyleInputs = collectLifestyleInputs();
+            if (lifestyleInputs == null) {
+                assessButton.setDisable(false);
+                loadingIndicator.setVisible(false);
+                return;
+            }
+
             // Make variables final for lambda
             final int finalAge = age;
             final double finalWeight = weight;
             final double finalHeight = height;
+            final Map<String, Object> finalLifestyleInputs = new HashMap<>(lifestyleInputs);
+            if (sleepHours != null) {
+                finalLifestyleInputs.put("sleep_hours", sleepHours);
+            }
+            finalLifestyleInputs.put("stress_level", stressLevel);
+            finalLifestyleInputs.put("diet_quality", dietQuality);
+            finalLifestyleInputs.put("exercise", exerciseLevel);
+            finalLifestyleInputs.put("alcohol", alcoholLevel);
+            finalLifestyleInputs.put("smoking", smokingCheckBox.isSelected() ? 1 : 0);
 
             new Thread(() -> {
                 try {
@@ -504,8 +809,23 @@ public class RiskAssessmentView extends BorderPane {
                         lastHeight = finalHeight;
                         lastSymptoms = new ArrayList<>(selectedSymptoms);
                         lastFamilyHistory = new ArrayList<>(familyHistory);
+                        lastLifestyleInputs.clear();
+                        lastLifestyleInputs.putAll(finalLifestyleInputs);
                         
                         displayResults(assessment);
+                        requestAdvancedAssessment(
+                            assessment,
+                            finalAge,
+                            finalWeight,
+                            finalHeight,
+                            sleepHours,
+                            stressLevel,
+                            dietQuality,
+                            exerciseLevel,
+                            alcoholLevel,
+                            smokingCheckBox.isSelected(),
+                            finalLifestyleInputs
+                        );
                         assessButton.setDisable(false);
                         loadingIndicator.setVisible(false);
                         exportButton.setDisable(false);
@@ -541,8 +861,163 @@ public class RiskAssessmentView extends BorderPane {
         }
     }
 
+    private Double parseOptionalDouble(TextField field, double min, double max, String fieldName) {
+        String text = field.getText() != null ? field.getText().trim() : "";
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            double value = Double.parseDouble(text);
+            if (value < min || value > max) {
+                showError("Invalid " + fieldName, fieldName + " must be between " + min + " and " + max + ".");
+                throw new IllegalArgumentException("Invalid " + fieldName);
+            }
+            return value;
+        } catch (NumberFormatException ex) {
+            showError("Invalid " + fieldName, "Please enter a valid number for " + fieldName + ".");
+            throw new IllegalArgumentException("Invalid " + fieldName);
+        }
+    }
+
+    private Integer parseOptionalInteger(TextField field, int min, int max, String fieldName) {
+        String text = field.getText() != null ? field.getText().trim() : "";
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            int value = Integer.parseInt(text);
+            if (value < min || value > max) {
+                showError("Invalid " + fieldName, fieldName + " must be between " + min + " and " + max + ".");
+                throw new IllegalArgumentException("Invalid " + fieldName);
+            }
+            return value;
+        } catch (NumberFormatException ex) {
+            showError("Invalid " + fieldName, "Please enter a valid whole number for " + fieldName + ".");
+            throw new IllegalArgumentException("Invalid " + fieldName);
+        }
+    }
+
+    private Map<String, Object> collectLifestyleInputs() {
+        Map<String, Object> data = new HashMap<>();
+        try {
+            Double vegetables = parseOptionalDouble(vegetableServingsField, 0, 12, "Fruit & vegetable servings per day");
+            if (vegetables != null) {
+                data.put("vegetable_servings", vegetables);
+            }
+
+            Integer processedMeals = parseOptionalInteger(processedMealsField, 0, 30, "Processed meals per week");
+            if (processedMeals != null) {
+                data.put("processed_meals_per_week", processedMeals);
+            }
+
+            Double hydration = parseOptionalDouble(hydrationField, 0, 20, "Water intake (glasses per day)");
+            if (hydration != null) {
+                data.put("hydration_glasses", hydration);
+            }
+
+            Integer moderateActivity = parseOptionalInteger(moderateActivityField, 0, 1000, "Moderate activity minutes");
+            if (moderateActivity != null) {
+                data.put("moderate_activity_minutes", moderateActivity);
+            }
+
+            Integer vigorousActivity = parseOptionalInteger(vigorousActivityField, 0, 1000, "Vigorous activity minutes");
+            if (vigorousActivity != null) {
+                data.put("vigorous_activity_minutes", vigorousActivity);
+            }
+
+            Integer strengthSessions = parseOptionalInteger(strengthSessionsField, 0, 28, "Strength sessions per week");
+            if (strengthSessions != null) {
+                data.put("strength_training_sessions", strengthSessions);
+            }
+
+            Double sedentaryHours = parseOptionalDouble(sedentaryHoursField, 0, 24, "Sitting time (hours per day)");
+            if (sedentaryHours != null) {
+                data.put("sedentary_hours", sedentaryHours);
+            }
+
+            Double workHours = parseOptionalDouble(workHoursField, 0, 120, "Work hours per week");
+            if (workHours != null) {
+                data.put("work_hours", workHours);
+            }
+
+            Integer lastCheckupMonths = parseOptionalInteger(lastCheckupField, 0, 300, "Months since last check-up");
+            if (lastCheckupMonths != null) {
+                data.put("last_checkup_months", lastCheckupMonths);
+            }
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+
+        data.put("caffeine_intake", Math.max(0, caffeineIntakeCombo.getSelectionModel().getSelectedIndex()));
+        data.put("sleep_quality", Math.max(0, sleepQualityCombo.getSelectionModel().getSelectedIndex()));
+        data.put("sleep_consistency", Math.max(0, sleepConsistencyCombo.getSelectionModel().getSelectedIndex()));
+        data.put("snoring", snoringCheckBox.isSelected() ? 1 : 0);
+        data.put("stress_coping", Math.max(0, stressCopingCombo.getSelectionModel().getSelectedIndex()));
+        data.put("mood_stability", Math.max(0, moodStabilityCombo.getSelectionModel().getSelectedIndex()));
+        data.put("medication_adherence", Math.max(0, medicationAdherenceCombo.getSelectionModel().getSelectedIndex()));
+        data.put("medication_side_effects", medicationSideEffectsCheckBox.isSelected() ? 1 : 0);
+
+        int smokingIntensityIndex = Math.max(0, smokingIntensityCombo.getSelectionModel().getSelectedIndex());
+        data.put("smoking_intensity", smokingCheckBox.isSelected() ? smokingIntensityIndex : 0);
+        data.put("vaping", vapingCheckBox.isSelected() ? 1 : 0);
+        data.put("environmental_exposure", Math.max(0, environmentExposureCombo.getSelectionModel().getSelectedIndex()));
+        data.put("shift_work", shiftWorkCheckBox.isSelected() ? 1 : 0);
+        data.put("vaccination_status", Math.max(0, vaccinationStatusCombo.getSelectionModel().getSelectedIndex()));
+
+        return data;
+    }
+
+    private VBox createAdvancedSection() {
+        confidenceIndicators = new VBox(10);
+        confidenceIndicators.setFillWidth(true);
+        confidenceIndicators.setStyle("-fx-background-color: #f8fafc; -fx-padding: 10; -fx-background-radius: 8;");
+
+        Label loadingLabel = new Label("Calculating advanced insights...");
+        loadingLabel.setWrapText(true);
+        loadingLabel.setStyle("-fx-text-fill: #0F766E;");
+        confidenceIndicators.getChildren().add(loadingLabel);
+
+        uncertaintyAlert = new HBox(10);
+        uncertaintyAlert.setAlignment(Pos.CENTER_LEFT);
+        uncertaintyAlert.setPadding(new Insets(12));
+        uncertaintyAlert.setStyle("-fx-background-color: #fff3cd; -fx-border-color: #ffeaa7; -fx-border-radius: 6;");
+        uncertaintyAlert.setVisible(false);
+
+        Label warningIcon = new Label("⚠");
+        warningIcon.setStyle("-fx-font-size: 16;");
+        Label warningText = new Label("Some predictions have higher uncertainty. Provide additional data for improved accuracy.");
+        warningText.setWrapText(true);
+        warningText.setStyle("-fx-text-fill: #856404; -fx-font-size: 14;");
+        uncertaintyAlert.getChildren().addAll(warningIcon, warningText);
+
+        Label sectionTitle = new Label("Advanced Risk Analysis with Confidence Scores");
+        sectionTitle.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #0F766E;");
+
+        VBox container = new VBox(12);
+        container.setStyle("-fx-background-color: white; -fx-padding: 18; -fx-background-radius: 10;");
+        lifestyleInsightsBox = new VBox(12);
+        lifestyleInsightsBox.setStyle("-fx-background-color: #F0FDFA; -fx-padding: 14; -fx-background-radius: 10; -fx-border-color: #5EEAD4; -fx-border-radius: 10; -fx-border-width: 1;");
+        lifestyleInsightsBox.setVisible(false);
+        lifestyleInsightsBox.setManaged(false);
+
+        dataQualitySummaryBox = new VBox(8);
+        dataQualitySummaryBox.setStyle("-fx-background-color: #EFF6FF; -fx-padding: 12; -fx-background-radius: 8;");
+        dataQualitySummaryBox.setVisible(false);
+        dataQualitySummaryBox.setManaged(false);
+
+        healthCoachSummaryBox = new VBox(8);
+        healthCoachSummaryBox.setStyle("-fx-background-color: #ECFDF5; -fx-padding: 12; -fx-background-radius: 8;");
+        healthCoachSummaryBox.setVisible(false);
+        healthCoachSummaryBox.setManaged(false);
+
+        container.getChildren().addAll(sectionTitle, uncertaintyAlert, confidenceIndicators, lifestyleInsightsBox, dataQualitySummaryBox, healthCoachSummaryBox);
+
+        return container;
+    }
+
     private void displayResults(RiskAssessment assessment) {
         resultsContainer.getChildren().clear();
+        resultsContainer.getChildren().add(createAdvancedSection());
 
         // Health Score Display (if available)
         if (assessment.getHealthScore() != null) {
@@ -647,6 +1122,617 @@ public class RiskAssessmentView extends BorderPane {
 
             resultsContainer.getChildren().add(recommendationsBox);
         }
+
+        Label advancedFooter = new Label("Advanced insights are powered by ensemble machine learning models with calibrated confidence intervals.");
+        advancedFooter.setWrapText(true);
+        advancedFooter.setStyle("-fx-text-fill: #64748B; -fx-font-size: 12;");
+        resultsContainer.getChildren().add(advancedFooter);
+    }
+
+    private void requestAdvancedAssessment(RiskAssessment assessment,
+                                           int age,
+                                           double weight,
+                                           double height,
+                                           Double sleepHours,
+                                           int stressLevel,
+                                           int dietQuality,
+                                           int exerciseLevel,
+                                           int alcoholLevel,
+                                           boolean smoking,
+                                           Map<String, Object> lifestyleInputs) {
+        if (confidenceIndicators == null) {
+            return;
+        }
+
+        confidenceIndicators.getChildren().clear();
+        hideHealthCoachSummary();
+        if (lifestyleInsightsBox != null) {
+            lifestyleInsightsBox.getChildren().clear();
+            lifestyleInsightsBox.setVisible(false);
+            lifestyleInsightsBox.setManaged(false);
+        }
+        if (dataQualitySummaryBox != null) {
+            dataQualitySummaryBox.getChildren().clear();
+            dataQualitySummaryBox.setVisible(false);
+            dataQualitySummaryBox.setManaged(false);
+        }
+        lastAdvancedResponse = null;
+        Label loadingLabel = new Label("Calculating advanced insights...");
+        loadingLabel.setWrapText(true);
+        loadingLabel.setStyle("-fx-text-fill: #0F766E;");
+        confidenceIndicators.getChildren().add(loadingLabel);
+
+        JSONObject payload = buildAdvancedPayload(assessment, age, weight, height, sleepHours,
+                stressLevel, dietQuality, exerciseLevel, alcoholLevel, smoking, lifestyleInputs);
+
+        CompletableFuture
+            .supplyAsync(() -> AdvancedApiClient.getAdvancedRiskAssessment(payload))
+            .thenAccept(response -> Platform.runLater(() -> displayAdvancedResults(response)))
+            .exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    confidenceIndicators.getChildren().clear();
+                    Label errorLabel = new Label("Advanced analysis is temporarily unavailable. Please try again later.");
+                    errorLabel.setWrapText(true);
+                    errorLabel.setStyle("-fx-text-fill: #DC2626;");
+                    confidenceIndicators.getChildren().add(errorLabel);
+
+                    if (getScene() != null && getScene().getRoot() instanceof StackPane) {
+                        String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+                        NotificationHelper.showErrorNotification((StackPane) getScene().getRoot(),
+                            "Advanced assessment failed: " + message);
+                    }
+                    if (uncertaintyAlert != null) {
+                        uncertaintyAlert.setVisible(false);
+                    }
+                    healthCoachPlanShown = false;
+                });
+                return null;
+            });
+    }
+
+    private JSONObject buildAdvancedPayload(RiskAssessment assessment,
+                                            int age,
+                                            double weight,
+                                            double height,
+                                            Double sleepHours,
+                                            int stressLevel,
+                                            int dietQuality,
+                                            int exerciseLevel,
+                                            int alcoholLevel,
+                                            boolean smoking,
+                                            Map<String, Object> lifestyleInputs) {
+        JSONObject payload = new JSONObject();
+        payload.put("age", age);
+        payload.put("weight", weight);
+        payload.put("height", height);
+        payload.put("bmi", assessment.getBmi());
+
+        Map<String, Double> estimatedValues = assessment.getEstimatedValues();
+        if (estimatedValues != null) {
+            if (estimatedValues.containsKey("systolic_bp")) {
+                payload.put("systolic_bp", estimatedValues.get("systolic_bp"));
+                payload.put("blood_pressure", estimatedValues.get("systolic_bp"));
+            }
+            if (estimatedValues.containsKey("fasting_glucose")) {
+                payload.put("glucose", estimatedValues.get("fasting_glucose"));
+            }
+            if (estimatedValues.containsKey("cholesterol")) {
+                payload.put("cholesterol", estimatedValues.get("cholesterol"));
+            }
+        }
+
+        if (sleepHours != null) {
+            payload.put("sleep_hours", sleepHours);
+        }
+        payload.put("stress_level", stressLevel);
+        payload.put("diet_quality", dietQuality);
+        payload.put("exercise", exerciseLevel);
+        payload.put("alcohol", alcoholLevel);
+        payload.put("smoking", smoking ? 1 : 0);
+
+        if (lifestyleInputs != null) {
+            for (Map.Entry<String, Object> entry : lifestyleInputs.entrySet()) {
+                Object value = entry.getValue();
+                if (value != null) {
+                    payload.put(entry.getKey(), value);
+                }
+            }
+        }
+
+        payload.put("baseline_diabetes_risk", assessment.getDiabetesRisk());
+        payload.put("baseline_heart_disease_risk", assessment.getHeartRisk());
+        payload.put("baseline_hypertension_risk", assessment.getHypertensionRisk());
+
+        if (assessment.getHealthScore() != null) {
+            payload.put("baseline_health_score", assessment.getHealthScore());
+        }
+
+        return payload;
+    }
+
+    private void displayAdvancedResults(JSONObject response) {
+        if (confidenceIndicators == null) {
+            return;
+        }
+
+        confidenceIndicators.getChildren().clear();
+
+        if (response == null || response.isEmpty()) {
+            Label noData = new Label("Advanced analysis did not return any insights.");
+            noData.setWrapText(true);
+            noData.setStyle("-fx-text-fill: #334155;");
+            confidenceIndicators.getChildren().add(noData);
+            if (uncertaintyAlert != null) {
+                uncertaintyAlert.setVisible(false);
+            }
+            if (lifestyleInsightsBox != null) {
+                lifestyleInsightsBox.setVisible(false);
+                lifestyleInsightsBox.setManaged(false);
+            }
+            if (dataQualitySummaryBox != null) {
+                dataQualitySummaryBox.setVisible(false);
+                dataQualitySummaryBox.setManaged(false);
+            }
+            lastAdvancedResponse = null;
+            return;
+        }
+
+        lastAdvancedResponse = response;
+
+        JSONObject predictions = response.optJSONObject("predictions");
+        if (predictions == null || predictions.isEmpty()) {
+            Label noData = new Label("Advanced analysis did not return any insights.");
+            noData.setWrapText(true);
+            noData.setStyle("-fx-text-fill: #334155;");
+            confidenceIndicators.getChildren().add(noData);
+            if (uncertaintyAlert != null) {
+                uncertaintyAlert.setVisible(false);
+            }
+            if (lifestyleInsightsBox != null) {
+                lifestyleInsightsBox.setVisible(false);
+                lifestyleInsightsBox.setManaged(false);
+            }
+            if (dataQualitySummaryBox != null) {
+                dataQualitySummaryBox.setVisible(false);
+                dataQualitySummaryBox.setManaged(false);
+            }
+            return;
+        }
+
+        boolean showUncertainty = false;
+        String[] preferredOrder = {"diabetes", "heart_disease", "hypertension"};
+
+        for (String disease : preferredOrder) {
+            if (predictions.has(disease)) {
+                JSONObject prediction = predictions.getJSONObject(disease);
+                confidenceIndicators.getChildren().add(new ConfidenceIndicator(disease, prediction));
+                double uncertaintyScore = prediction.optDouble("uncertainty_score", 0.0);
+                if (uncertaintyScore > 0.3) {
+                    showUncertainty = true;
+                }
+            }
+        }
+
+        Iterator<String> remainingKeys = predictions.keys();
+        while (remainingKeys.hasNext()) {
+            String key = remainingKeys.next();
+            boolean alreadyAdded = false;
+            for (String disease : preferredOrder) {
+                if (disease.equals(key)) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+            if (!alreadyAdded) {
+                JSONObject prediction = predictions.getJSONObject(key);
+                confidenceIndicators.getChildren().add(new ConfidenceIndicator(key, prediction));
+                double uncertaintyScore = prediction.optDouble("uncertainty_score", 0.0);
+                if (uncertaintyScore > 0.3) {
+                    showUncertainty = true;
+                }
+            }
+        }
+
+        if (confidenceIndicators.getChildren().isEmpty()) {
+            Label noData = new Label("Advanced analysis did not return any insights.");
+            noData.setWrapText(true);
+            noData.setStyle("-fx-text-fill: #334155;");
+            confidenceIndicators.getChildren().add(noData);
+        }
+
+        if (uncertaintyAlert != null) {
+            uncertaintyAlert.setVisible(showUncertainty);
+        }
+
+        JSONObject lifestyleSummary = response.optJSONObject("lifestyle_summary");
+        JSONArray overallFocus = response.optJSONArray("overall_focus");
+        JSONArray protectiveFactors = response.optJSONArray("protective_factors");
+        updateLifestyleInsights(lifestyleSummary, overallFocus, protectiveFactors);
+
+        JSONObject dataQuality = response.optJSONObject("data_quality");
+        updateDataQualitySummary(dataQuality);
+
+        maybeTriggerHealthCoachPlan(predictions);
+    }
+
+    private void updateLifestyleInsights(JSONObject summary, JSONArray focus, JSONArray protectiveFactors) {
+        if (lifestyleInsightsBox == null) {
+            return;
+        }
+
+        lifestyleInsightsBox.getChildren().clear();
+
+        if (summary == null || summary.isEmpty()) {
+            lifestyleInsightsBox.setVisible(false);
+            lifestyleInsightsBox.setManaged(false);
+            return;
+        }
+
+        lifestyleInsightsBox.setVisible(true);
+        lifestyleInsightsBox.setManaged(true);
+
+        Label header = new Label("Lifestyle & Daily Habits Impact");
+        header.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #0f766e;");
+
+        double overallScore = summary.optDouble("overall_score", Double.NaN);
+        VBox scoreCard = createOverallLifestyleCard(overallScore, summary.optString("overall_status", "Unknown"));
+
+        lifestyleInsightsBox.getChildren().addAll(header, scoreCard);
+
+        if (focus != null && focus.length() > 0) {
+            lifestyleInsightsBox.getChildren().add(createPriorityList("Top Lifestyle Priorities", focus, true));
+        }
+
+        if (protectiveFactors != null && protectiveFactors.length() > 0) {
+            lifestyleInsightsBox.getChildren().add(createPriorityList("Protective Strengths", protectiveFactors, false));
+        }
+
+        JSONObject categories = summary.optJSONObject("categories");
+        if (categories != null && categories.length() > 0) {
+            VBox categoriesBox = new VBox(10);
+            categoriesBox.setStyle("-fx-background-color: rgba(15, 118, 110, 0.05); -fx-padding: 12; -fx-background-radius: 8;");
+
+            Label categoriesTitle = new Label("Category Breakdown");
+            categoriesTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #0f172a;");
+            categoriesBox.getChildren().add(categoriesTitle);
+
+            for (String key : categories.keySet()) {
+                JSONObject category = categories.optJSONObject(key);
+                if (category != null) {
+                    categoriesBox.getChildren().add(createLifestyleCategoryCard(category));
+                }
+            }
+
+            lifestyleInsightsBox.getChildren().add(categoriesBox);
+        }
+    }
+
+    private VBox createOverallLifestyleCard(double score, String status) {
+        VBox box = new VBox(8);
+        box.setStyle("-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(14,116,144,0.12), 8, 0, 0, 3);");
+
+        Label title = new Label("Overall Lifestyle Score");
+        title.setStyle("-fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        ProgressBar bar = new ProgressBar(Double.isNaN(score) ? 0 : Math.max(0, Math.min(1, score / 100.0)));
+        bar.setPrefWidth(Double.MAX_VALUE);
+        String color = getLifestyleScoreColor(score);
+        bar.setStyle("-fx-accent: " + color + ";");
+
+        HBox details = new HBox(10);
+        details.setAlignment(Pos.CENTER_LEFT);
+        Label scoreLabel = new Label(Double.isNaN(score) ? "—" : String.format("%.0f/100", score));
+        scoreLabel.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+        Label statusLabel = new Label(status);
+        statusLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: " + color + ";");
+        details.getChildren().addAll(scoreLabel, statusLabel);
+
+        box.getChildren().addAll(title, bar, details);
+        return box;
+    }
+
+    private VBox createPriorityList(String titleText, JSONArray items, boolean highlight) {
+        VBox box = new VBox(6);
+        box.setStyle("-fx-background-color: " + (highlight ? "#FEF3C7" : "#ECFEFF") + "; -fx-padding: 10; -fx-background-radius: 8;");
+
+        Label title = new Label(titleText);
+        title.setStyle("-fx-font-weight: bold; -fx-text-fill: #0f172a;");
+        box.getChildren().add(title);
+
+        int displayCount = Math.min(items.length(), 4);
+        for (int i = 0; i < displayCount; i++) {
+            JSONObject obj = items.optJSONObject(i);
+            if (obj == null) {
+                continue;
+            }
+            String label = obj.optString("label", obj.optString("category", "Focus"));
+            String action = obj.optString("recommended_action", obj.optString("insight", ""));
+            double itemScore = obj.optDouble("score", Double.NaN);
+            String message = "• " + label + (Double.isNaN(itemScore) ? "" : String.format(" (%.0f/100)", itemScore));
+            if (!action.isEmpty()) {
+                message += " – " + action;
+            }
+            Label itemLabel = new Label(message);
+            itemLabel.setWrapText(true);
+            itemLabel.setStyle("-fx-text-fill: #1e293b;");
+            box.getChildren().add(itemLabel);
+        }
+
+        return box;
+    }
+
+    private VBox createLifestyleCategoryCard(JSONObject category) {
+        VBox card = new VBox(6);
+        card.setStyle("-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 10; -fx-border-color: rgba(14,116,144,0.15); -fx-border-radius: 10;");
+
+        String label = category.optString("label", "Category");
+        double score = category.optDouble("score", Double.NaN);
+        String status = category.optString("status", "Needs attention");
+
+        Label title = new Label(label);
+        title.setStyle("-fx-font-weight: bold; -fx-text-fill: #0f172a;");
+
+        HBox scoreRow = new HBox(8);
+        scoreRow.setAlignment(Pos.CENTER_LEFT);
+        Label scoreLabel = new Label(Double.isNaN(score) ? "—" : String.format("%.0f/100", score));
+        String color = getLifestyleScoreColor(score);
+        scoreLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+        Label statusLabel = new Label(status);
+        statusLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: " + color + ";");
+        scoreRow.getChildren().addAll(scoreLabel, statusLabel);
+
+        card.getChildren().addAll(title, scoreRow);
+
+        JSONArray risks = category.optJSONArray("risks");
+        if (risks != null && risks.length() > 0) {
+            Label riskLabel = new Label("Needs attention: " + risks.optString(0));
+            riskLabel.setWrapText(true);
+            riskLabel.setStyle("-fx-text-fill: #b45309;");
+            card.getChildren().add(riskLabel);
+        }
+
+        JSONArray positives = category.optJSONArray("positives");
+        if (positives != null && positives.length() > 0) {
+            Label positiveLabel = new Label("Strength: " + positives.optString(0));
+            positiveLabel.setWrapText(true);
+            positiveLabel.setStyle("-fx-text-fill: #047857;");
+            card.getChildren().add(positiveLabel);
+        }
+
+        JSONArray actions = category.optJSONArray("actions");
+        if (actions != null && actions.length() > 0) {
+            Label actionLabel = new Label("Action: " + actions.optString(0));
+            actionLabel.setWrapText(true);
+            actionLabel.setStyle("-fx-text-fill: #0f172a;");
+            card.getChildren().add(actionLabel);
+        }
+        return card;
+    }
+
+    private void updateDataQualitySummary(JSONObject dataQuality) {
+        if (dataQualitySummaryBox == null) {
+            return;
+        }
+
+        dataQualitySummaryBox.getChildren().clear();
+
+        if (dataQuality == null || dataQuality.isEmpty()) {
+            dataQualitySummaryBox.setVisible(false);
+            dataQualitySummaryBox.setManaged(false);
+            return;
+        }
+
+        dataQualitySummaryBox.setVisible(true);
+        dataQualitySummaryBox.setManaged(true);
+
+        Label title = new Label("Data Quality & Coverage");
+        title.setStyle("-fx-font-weight: bold; -fx-text-fill: #1d4ed8;");
+
+        int missing = dataQuality.optInt("missing_features", 0);
+        int total = dataQuality.optInt("total_features", 0);
+        double completeness = dataQuality.optDouble("completeness", 0.0);
+
+        ProgressBar completenessBar = new ProgressBar(Math.max(0, Math.min(1, completeness / 100.0)));
+        completenessBar.setPrefWidth(Double.MAX_VALUE);
+        completenessBar.setStyle("-fx-accent: #2563EB;");
+
+        Label summary = new Label(String.format("Data completeness: %.1f%% (%d of %d lifestyle datapoints provided)",
+            completeness, total - missing, total));
+        summary.setWrapText(true);
+        summary.setStyle("-fx-text-fill: #1e293b;");
+
+        if (missing > 0) {
+            Label hint = new Label("Tip: Add the missing details marked above to further improve precision.");
+            hint.setWrapText(true);
+            hint.setStyle("-fx-text-fill: #b45309;");
+            dataQualitySummaryBox.getChildren().addAll(title, completenessBar, summary, hint);
+        } else {
+            dataQualitySummaryBox.getChildren().addAll(title, completenessBar, summary);
+        }
+    }
+
+    private String getLifestyleScoreColor(double score) {
+        if (Double.isNaN(score)) {
+            return "#0f172a";
+        }
+        if (score >= 80) {
+            return "#059669";
+        }
+        if (score >= 65) {
+            return "#10B981";
+        }
+        if (score >= 50) {
+            return "#F59E0B";
+        }
+        return "#DC2626";
+    }
+
+    private void maybeTriggerHealthCoachPlan(JSONObject predictions) {
+        if (healthCoachPlanShown) {
+            return;
+        }
+        if (predictions == null || predictions.isEmpty()) {
+            return;
+        }
+        if (currentAssessment == null) {
+            return;
+        }
+
+        healthCoachPlanShown = true;
+
+        JSONObject payload = new JSONObject();
+        payload.put("age", lastAge);
+        payload.put("bmi", currentAssessment.getBmi());
+        double score = currentAssessment.getHealthScore() != null
+            ? currentAssessment.getHealthScore()
+            : calculateHealthCoachScore(predictions);
+        payload.put("health_score", score);
+        payload.put("risk_predictions", predictions);
+        if (lastFamilyHistory != null) {
+            payload.put("existing_conditions", lastFamilyHistory);
+        }
+        if (lastSymptoms != null) {
+            payload.put("symptoms", lastSymptoms);
+        }
+
+        CompletableFuture
+            .supplyAsync(() -> HealthCoachApiClient.generatePlan(payload))
+            .thenAccept(response -> Platform.runLater(() -> {
+                if (response.optBoolean("success") && response.has("plan")) {
+                    lastHealthCoachPlan = response.getJSONObject("plan");
+                    displayHealthCoachSummary(lastHealthCoachPlan);
+                    HealthCoachPlanView.showPlanDialog(lastHealthCoachPlan);
+                    showHealthCoachNotification("A personalized 30-day health plan is ready.", NotificationHelper.NotificationType.SUCCESS);
+                } else {
+                    healthCoachPlanShown = false;
+                    hideHealthCoachSummary();
+                    showHealthCoachNotification("Health coach plan unavailable. Using standard recommendations.",
+                        NotificationHelper.NotificationType.WARNING);
+                }
+            }))
+            .exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    healthCoachPlanShown = false;
+                    hideHealthCoachSummary();
+                    String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+                    showHealthCoachNotification("Health coach plan generation failed: " + message,
+                        NotificationHelper.NotificationType.ERROR);
+                });
+                return null;
+            });
+    }
+
+    private void displayHealthCoachSummary(JSONObject plan) {
+        if (healthCoachSummaryBox == null) {
+            return;
+        }
+
+        healthCoachSummaryBox.getChildren().clear();
+        healthCoachSummaryBox.setVisible(true);
+        healthCoachSummaryBox.setManaged(true);
+
+        String primaryCondition = plan.optString("primary_condition", "general health");
+        String conditionDisplay = switch (primaryCondition) {
+            case "diabetes" -> "Diabetes";
+            case "heart_disease" -> "Heart Disease";
+            case "hypertension" -> "Hypertension";
+            default -> "Whole-body Wellness";
+        };
+
+        Label title = new Label("Personalized Health Coach Plan");
+        title.setStyle("-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #047857;");
+
+        Label focus = new Label("Focus: " + conditionDisplay);
+        focus.setStyle("-fx-text-fill: #065f46; -fx-font-size: 13;");
+
+        String targetSummary = "Achievable risk reduction goals tailored for you.";
+        JSONObject targets = plan.optJSONObject("risk_reduction_targets");
+        if (targets != null && targets.keys().hasNext()) {
+            String key = targets.keys().next();
+            JSONObject target = targets.optJSONObject(key);
+            if (target != null) {
+                double reduction = target.optDouble("target_reduction", 0.0);
+                targetSummary = String.format("Goal: reduce %s risk by %.1f%% in 30 days.",
+                    key.replace("_", " ").toLowerCase(), reduction);
+            }
+        }
+        Label targetLabel = new Label(targetSummary);
+        targetLabel.setWrapText(true);
+        targetLabel.setStyle("-fx-text-fill: #065f46;");
+
+        Button viewPlanButton = new Button("View Full Plan");
+        viewPlanButton.setStyle("-fx-background-color: #0d9488; -fx-text-fill: white; -fx-font-weight: bold;");
+        viewPlanButton.setOnAction(e -> {
+            if (lastHealthCoachPlan != null) {
+                HealthCoachPlanView.showPlanDialog(lastHealthCoachPlan);
+            }
+        });
+
+        Button copyPlanButton = new Button("Copy Plan");
+        copyPlanButton.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;");
+        copyPlanButton.setOnAction(e -> {
+            if (lastHealthCoachPlan != null) {
+                ClipboardContent content = new ClipboardContent();
+                content.putString(lastHealthCoachPlan.toString(2));
+                Clipboard.getSystemClipboard().setContent(content);
+                showHealthCoachNotification("Health plan copied to clipboard.", NotificationHelper.NotificationType.SUCCESS);
+            }
+        });
+
+        HBox buttonRow = new HBox(10, viewPlanButton, copyPlanButton);
+        buttonRow.setAlignment(Pos.CENTER_LEFT);
+
+        healthCoachSummaryBox.getChildren().addAll(title, focus, targetLabel, buttonRow);
+    }
+
+    private void hideHealthCoachSummary() {
+        if (healthCoachSummaryBox != null) {
+            healthCoachSummaryBox.setVisible(false);
+            healthCoachSummaryBox.setManaged(false);
+            healthCoachSummaryBox.getChildren().clear();
+        }
+        lastHealthCoachPlan = null;
+    }
+
+    private void showHealthCoachNotification(String message, NotificationHelper.NotificationType type) {
+        if (getScene() != null && getScene().getRoot() instanceof StackPane stackPane) {
+            switch (type) {
+                case SUCCESS -> NotificationHelper.showSuccessNotification(stackPane, message);
+                case WARNING -> NotificationHelper.showWarningNotification(stackPane, message);
+                case ERROR -> NotificationHelper.showErrorNotification(stackPane, message);
+                default -> NotificationHelper.showInfoNotification(stackPane, message);
+            }
+        } else {
+            Alert.AlertType alertType = switch (type) {
+                case SUCCESS -> Alert.AlertType.INFORMATION;
+                case WARNING -> Alert.AlertType.WARNING;
+                case ERROR -> Alert.AlertType.ERROR;
+                default -> Alert.AlertType.INFORMATION;
+            };
+            Alert alert = new Alert(alertType, message, ButtonType.OK);
+            alert.setHeaderText(null);
+            alert.show();
+        }
+    }
+
+    private double calculateHealthCoachScore(JSONObject predictions) {
+        double totalRisk = 0;
+        int count = 0;
+
+        for (String key : predictions.keySet()) {
+            JSONObject prediction = predictions.optJSONObject(key);
+            if (prediction == null) {
+                continue;
+            }
+            double risk = prediction.optDouble("risk_percentage", 0.0);
+            if (risk > 0) {
+                totalRisk += risk;
+                count++;
+            }
+        }
+
+        double averageRisk = count > 0 ? totalRisk / count : 40.0;
+        return Math.max(30.0, 100.0 - averageRisk * 0.8);
     }
 
     private VBox createRiskCard(String title, int riskPercentage, String color) {
@@ -1227,6 +2313,19 @@ public class RiskAssessmentView extends BorderPane {
         return card;
     }
 
+    private Map<String, Object> buildAdvancedExportData() {
+        if (lastAdvancedResponse == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(lastAdvancedResponse.toString(),
+                new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            System.err.println("Failed to prepare advanced insights for export: " + e.getMessage());
+            return null;
+        }
+    }
+
     private void exportResults() {
         if (currentAssessment == null) {
             showError("No Results", "No risk assessment results to export.");
@@ -1237,7 +2336,9 @@ public class RiskAssessmentView extends BorderPane {
             currentAssessment,
             lastAge, lastWeight, lastHeight,
             lastSymptoms != null ? lastSymptoms : new ArrayList<>(),
-            lastFamilyHistory != null ? lastFamilyHistory : new ArrayList<>()
+            lastFamilyHistory != null ? lastFamilyHistory : new ArrayList<>(),
+            buildAdvancedExportData(),
+            lastLifestyleInputs != null ? new HashMap<>(lastLifestyleInputs) : new HashMap<>()
         );
         
         FileExporter.exportToFile(
@@ -1277,6 +2378,13 @@ public class RiskAssessmentView extends BorderPane {
             ));
             exportData.put("health_score", currentAssessment.getHealthScore());
             exportData.put("assessment", objectMapper.convertValue(currentAssessment, java.util.Map.class));
+            Map<String, Object> advancedInsights = buildAdvancedExportData();
+            if (advancedInsights != null) {
+                exportData.put("advanced_insights", advancedInsights);
+            }
+            if (lastLifestyleInputs != null && !lastLifestyleInputs.isEmpty()) {
+                exportData.put("lifestyle_inputs", new HashMap<>(lastLifestyleInputs));
+            }
             
             JSONExporter.exportToJSON(
                 exportData,
@@ -1304,7 +2412,9 @@ public class RiskAssessmentView extends BorderPane {
             currentAssessment,
             lastAge, lastWeight, lastHeight,
             lastSymptoms != null ? lastSymptoms : new ArrayList<>(),
-            lastFamilyHistory != null ? lastFamilyHistory : new ArrayList<>()
+            lastFamilyHistory != null ? lastFamilyHistory : new ArrayList<>(),
+            buildAdvancedExportData(),
+            lastLifestyleInputs != null ? new HashMap<>(lastLifestyleInputs) : new HashMap<>()
         );
         
         FileExporter.copyToClipboard(report);

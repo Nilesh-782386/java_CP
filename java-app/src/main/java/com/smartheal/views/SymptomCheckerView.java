@@ -884,148 +884,265 @@ public class SymptomCheckerView extends BorderPane {
                 errorLabel.setStyle("-fx-text-fill: #DC2626; -fx-font-size: 14px; -fx-padding: 20;");
                 return errorLabel;
             }
-            
-            // Colorful card based on severity - ALWAYS VISIBLE, STABLE, NO HOVER ISSUES
-            String severity = disease.getSeverity() != null ? disease.getSeverity() : "moderate";
-            String cardColor = getCardColor(severity);
-            String borderColor = getBorderColorForSeverity(severity);
-            
-            VBox card = new VBox(18);  // Increased spacing for better visibility
-            card.getStyleClass().add("card");
-            
-            // Enhanced colorful styling - GRADIENT backgrounds, vibrant colors, ALWAYS VISIBLE
-            String gradientStyle = getGradientStyle(severity);
-            card.setStyle(
-                "-fx-background-color: " + gradientStyle + "; " +
-                "-fx-border-color: " + borderColor + "; " +
-                "-fx-border-width: 4; " +  // Thicker colorful border
-                "-fx-padding: 25; " +  // Better padding
-                "-fx-background-radius: 16; " +
-                "-fx-border-radius: 16; " +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 20, 0, 0, 8); " +  // Strong shadow
-                "-fx-opacity: 1.0; " +  // Always fully visible
-                "-fx-min-width: 500; " +  // Minimum width
-                "-fx-max-width: 900; " +  // Maximum width
-                "-fx-pref-width: 750;"  // Preferred width
-            );
-            
-            // Make card stable - no hover effects that cause disappearing
-            card.setPickOnBounds(true);  // Allow mouse events
-            card.setMouseTransparent(false);
-            card.setManaged(true);
-            card.setVisible(true);
-            
-            // Prevent any style changes on hover - cards stay stable
-            card.setOnMouseEntered(null);
-            card.setOnMouseExited(null);
 
-            Label nameLabel = new Label(disease.getName() != null ? disease.getName() : "Unknown Disease");
-            nameLabel.setFont(Font.font("System", FontWeight.BOLD, 22));  // Larger font
-            nameLabel.setStyle("-fx-text-fill: #111827; -fx-font-weight: bold;");  // Very dark for maximum contrast
+            String severity = disease.getSeverity() != null ? disease.getSeverity() : "moderate";
+            String borderColor = getBorderColorForSeverity(severity);
+            VBox card = new VBox(18);
+            card.getStyleClass().add("card");
+            card.setStyle(
+                "-fx-background-color: linear-gradient(to bottom right, rgba(255,255,255,0.92), rgba(240,249,255,0.95));" +
+                "-fx-border-color: " + borderColor + ";" +
+                "-fx-border-width: 3;" +
+                "-fx-padding: 24;" +
+                "-fx-background-radius: 18;" +
+                "-fx-border-radius: 18;" +
+                "-fx-effect: dropshadow(gaussian, rgba(15,118,110,0.18), 20, 0, 0, 10);" +
+                "-fx-min-width: 520;" +
+                "-fx-max-width: 900;" +
+                "-fx-pref-width: 760;"
+            );
+
+            Label nameLabel = new Label(disease.getName() != null ? disease.getName() : "Unknown Condition");
+            nameLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
+            nameLabel.setStyle("-fx-text-fill: #0f172a;");
             nameLabel.setWrapText(true);
 
-            HBox badgeBox = new HBox(10);
-            badgeBox.setAlignment(Pos.CENTER_LEFT);
-            Label severityBadge = new Label("• " + severity.toUpperCase() + " SEVERITY");
-            String severityStyle = getSeverityBadgeStyle(severity);
-            severityBadge.setStyle(severityStyle + " -fx-font-weight: bold;");
-            severityBadge.setFont(Font.font("System", FontWeight.BOLD, 13));  // Larger
-            Label matchLabel = new Label(String.format("%.1f%% Match", result.getMatchPercentage()));
-            matchLabel.setFont(Font.font("System", FontWeight.BOLD, 18));  // Even larger
+            HBox badgeRow = new HBox(12);
+            badgeRow.setAlignment(Pos.CENTER_LEFT);
+
+            Label severityBadge = new Label(severity.toUpperCase() + " SEVERITY");
+            severityBadge.setStyle(getSeverityBadgeStyle(severity) + " -fx-padding: 6 12; -fx-font-size: 13px; -fx-font-weight: bold;");
+
+            Label matchLabel = new Label(String.format("%.1f%% Model match", result.getMatchPercentage()));
+            matchLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
             matchLabel.setTextFill(getSeverityColor(severity));
-            matchLabel.setStyle("-fx-font-weight: bold;");
-            badgeBox.getChildren().addAll(severityBadge, matchLabel);
-            HBox.setHgrow(badgeBox, Priority.ALWAYS);
 
-            ProgressBar progressBar = new ProgressBar(result.getMatchPercentage() / 100.0);
-            progressBar.setPrefWidth(Double.MAX_VALUE);
-            progressBar.setPrefHeight(12);  // Thicker for better visibility
-            progressBar.setStyle(
-                "-fx-accent: " + getSeverityProgressColor(severity) + "; " +
-                "-fx-background-color: #E5E7EB; " +
-                "-fx-control-inner-background: " + getSeverityProgressColor(severity) + ";"
+            badgeRow.getChildren().addAll(severityBadge, matchLabel);
+
+            ProgressBar probabilityBar = new ProgressBar(Math.min(Math.max(result.getMatchPercentage() / 100.0, 0), 1));
+            probabilityBar.setPrefHeight(10);
+            probabilityBar.setStyle("-fx-accent: " + getSeverityProgressColor(severity) + "; -fx-background-color: #e5e7eb;");
+
+            SymptomTriage triage = result.getTriage();
+            if (triage != null && triage.getLevel() != null) {
+                VBox triageBox = new VBox(6);
+                String color = triage.getColor() != null ? triage.getColor() : "#0ea5e9";
+                triageBox.setStyle(
+                    "-fx-background-color: " + color + "22;" +
+                    "-fx-border-color: " + color + ";" +
+                    "-fx-border-width: 2;" +
+                    "-fx-border-radius: 12;" +
+                    "-fx-background-radius: 12;" +
+                    "-fx-padding: 12;"
+                );
+
+                Label triageTitle = new Label("Triage Advice: " + triage.getLevel().toUpperCase());
+                triageTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+                triageTitle.setTextFill(Color.web(color));
+
+                Label triageMessage = new Label(triage.getMessage());
+                triageMessage.setWrapText(true);
+                triageMessage.setStyle("-fx-text-fill: #0f172a;");
+
+                if (triage.getSpecialist() != null && !triage.getSpecialist().isEmpty()) {
+                    Label specialistLabel = new Label("Recommended specialist: " + triage.getSpecialist());
+                    specialistLabel.setStyle("-fx-text-fill: #1e293b; -fx-font-size: 13px;");
+                    triageBox.getChildren().addAll(triageTitle, triageMessage, specialistLabel);
+                } else {
+                    triageBox.getChildren().addAll(triageTitle, triageMessage);
+                }
+                card.getChildren().add(triageBox);
+            }
+
+            SymptomConfidence confidence = result.getConfidence();
+            if (confidence != null) {
+                VBox confidenceBox = new VBox(6);
+                confidenceBox.setStyle("-fx-background-color: #f8fafc; -fx-border-color: #cbd5f5; -fx-border-width: 1; -fx-border-radius: 12; -fx-background-radius: 12; -fx-padding: 12;");
+
+                Label confidenceLabel = new Label(
+                    String.format("Confidence: %.1f%% (%s)", 
+                        confidence.getScore() != null ? confidence.getScore() : result.getMatchPercentage(),
+                        confidence.getLevel() != null ? confidence.getLevel() : "N/A")
+                );
+                confidenceLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+                confidenceLabel.setStyle("-fx-text-fill: #0f172a;");
+
+                ProgressBar confidenceBar = new ProgressBar(
+                    Math.min(Math.max((confidence.getScore() != null ? confidence.getScore() : result.getMatchPercentage()) / 100.0, 0), 1)
+                );
+                confidenceBar.setPrefHeight(8);
+                confidenceBar.setStyle("-fx-accent: #0ea5e9;");
+
+                Label coverageLabel = new Label(
+                    String.format("Symptom overlap: %.1f%%",
+                        confidence.getSymptomCoverage() != null ? confidence.getSymptomCoverage() : result.getSymptomCoverage())
+                );
+                coverageLabel.setStyle("-fx-text-fill: #475569; -fx-font-size: 12px;");
+
+                if (confidence.getExplanation() != null) {
+                    Label explanation = new Label(confidence.getExplanation());
+                    explanation.setWrapText(true);
+                    explanation.setStyle("-fx-text-fill: #475569; -fx-font-size: 12px;");
+                    confidenceBox.getChildren().addAll(confidenceLabel, confidenceBar, coverageLabel, explanation);
+                } else {
+                    confidenceBox.getChildren().addAll(confidenceLabel, confidenceBar, coverageLabel);
+                }
+
+                card.getChildren().add(confidenceBox);
+            }
+
+            Label descLabel = new Label(
+                LanguageManager.getUILabel("description") + ": " +
+                (disease.getDescription() != null ? disease.getDescription() : "No description available.")
             );
-
-            String descText = LanguageManager.getUILabel("description") + ": " + 
-                (disease.getDescription() != null ? disease.getDescription() : "No description available");
-            Label descLabel = new Label(descText);
             descLabel.setWrapText(true);
-            descLabel.setFont(Font.font("System", FontWeight.NORMAL, 15));  // Larger font
-            descLabel.setStyle("-fx-text-fill: #111827; -fx-font-weight: normal;");  // Very dark for readability
-            descLabel.setLineSpacing(3);  // Better line spacing
+            descLabel.setStyle("-fx-text-fill: #1f2937; -fx-font-size: 14px;");
+            descLabel.setLineSpacing(3);
 
-            Label matchedLabel = new Label(LanguageManager.getUILabel("matched_symptoms") + ":");
-            matchedLabel.setFont(Font.font("System", FontWeight.BOLD, 15));  // Larger
-            matchedLabel.setStyle("-fx-text-fill: #111827; -fx-font-weight: bold;");  // Very dark
-            FlowPane matchedFlow = new FlowPane(8, 8);  // Better spacing
-            if (result.getMatchedSymptoms() != null) {
-                for (String symptom : result.getMatchedSymptoms()) {
-                    if (symptom != null && !symptom.isEmpty()) {
-                        // Display translated symptom name
-                        String translatedSymptom = LanguageManager.translateSymptom(symptom);
-                        Label badge = new Label(translatedSymptom);
-                        // Enhanced colorful badge styling
-                        badge.setStyle(
-                            "-fx-background-color: linear-gradient(to right, #DBEAFE, #BFDBFE); " +
-                            "-fx-border-color: #0F766E; " +
-                            "-fx-border-width: 2.5; " +
-                            "-fx-padding: 7 14; " +  // Better padding
-                            "-fx-background-radius: 10; " +
-                            "-fx-border-radius: 10; " +
-                            "-fx-text-fill: #065F46; " +  // Darker text for contrast
-                            "-fx-font-weight: bold; " +
-                            "-fx-font-size: 13px;"  // Larger font
-                        );
-                        matchedFlow.getChildren().add(badge);
-                    }
-                }
+            card.getChildren().addAll(nameLabel, badgeRow, probabilityBar, descLabel);
+
+            if (result.getRedFlags() != null && !result.getRedFlags().isEmpty()) {
+                VBox warningBox = new VBox(6);
+                warningBox.setStyle("-fx-background-color: #fee2e2; -fx-border-color: #ef4444; -fx-border-width: 2; -fx-border-radius: 12; -fx-background-radius: 12; -fx-padding: 12;");
+                Label warningTitle = new Label("⚠️ Critical symptoms reported");
+                warningTitle.setStyle("-fx-text-fill: #b91c1c; -fx-font-weight: bold;");
+                FlowPane warningFlow = buildTagFlow(result.getRedFlags(), "#fee2e2", "#b91c1c");
+                warningBox.getChildren().addAll(warningTitle, warningFlow);
+                card.getChildren().add(warningBox);
             }
 
-            Label treatmentsLabel = new Label(LanguageManager.getUILabel("common_treatments") + ":");
-            treatmentsLabel.setFont(Font.font("System", FontWeight.BOLD, 15));  // Larger
-            treatmentsLabel.setStyle("-fx-text-fill: #111827; -fx-font-weight: bold;");  // Very dark
-            VBox treatmentsBox = new VBox(7);  // Better spacing
-            if (disease.getTreatments() != null && !disease.getTreatments().isEmpty()) {
-                for (String treatment : disease.getTreatments()) {
-                    if (treatment != null && !treatment.isEmpty()) {
-                        Label treatmentLabel = new Label("• " + treatment);
-                        treatmentLabel.setFont(Font.font("System", FontWeight.NORMAL, 14));  // Larger
-                        treatmentLabel.setStyle("-fx-text-fill: #111827;");  // Very dark
-                        treatmentsBox.getChildren().add(treatmentLabel);
-                    }
-                }
-            } else {
-                Label noTreatmentLabel = new Label("• Consult a healthcare professional");
-                noTreatmentLabel.setFont(Font.font("System", FontWeight.NORMAL, 14));  // Larger
-                noTreatmentLabel.setStyle("-fx-text-fill: #111827;");  // Very dark
-                treatmentsBox.getChildren().add(noTreatmentLabel);
+            List<String> matchedTranslated = translateSymptomsList(result.getMatchedSymptoms());
+            card.getChildren().add(buildTagSection("Matched symptoms", matchedTranslated, "#dbeafe", "#0f766e"));
+            if (result.getMissingSymptoms() != null && !result.getMissingSymptoms().isEmpty()) {
+                List<String> missingTranslated = translateSymptomsList(result.getMissingSymptoms());
+                card.getChildren().add(buildTagSection("Typical symptoms not reported", missingTranslated, "#fef9c3", "#f59e0b"));
+            }
+            if (result.getCriticalSymptomsMissing() != null && !result.getCriticalSymptomsMissing().isEmpty()) {
+                List<String> criticalTranslated = translateSymptomsList(result.getCriticalSymptomsMissing());
+                card.getChildren().add(buildTagSection("Key diagnostic clues to monitor", criticalTranslated, "#fee2e2", "#dc2626"));
             }
 
-            Label helpLabel = new Label(LanguageManager.getUILabel("when_to_seek_help") + ":");
-            helpLabel.setFont(Font.font("System", FontWeight.BOLD, 15));  // Larger
-            helpLabel.setTextFill(Color.rgb(220, 38, 38));  // Bright red
-            helpLabel.setStyle("-fx-font-weight: bold;");
-            Label helpText = new Label(disease.getWhenToSeekHelp() != null ? disease.getWhenToSeekHelp() : "Please consult with a qualified healthcare provider");
-            helpText.setWrapText(true);
-            helpText.setFont(Font.font("System", FontWeight.NORMAL, 14));  // Larger
-            helpText.setStyle("-fx-text-fill: #DC2626; -fx-font-weight: normal;");  // Bright red for importance
-            helpText.setLineSpacing(3);  // Better line spacing
+            card.getChildren().add(buildBulletSection(LanguageManager.getUILabel("common_treatments"), disease.getTreatments(), "#0f172a"));
+            card.getChildren().add(buildBulletSection("Recommended tests & investigations", result.getRecommendedTests(), "#0f172a"));
+            card.getChildren().add(buildBulletSection("Lifestyle & self-care guidance", result.getLifestyleAdvice(), "#0f172a"));
 
-            VBox helpBox = new VBox(6);
-            helpBox.getChildren().addAll(helpLabel, helpText);
+            if (result.getMonitoringTips() != null && !result.getMonitoringTips().isEmpty()) {
+                card.getChildren().add(buildBulletSection("Home monitoring tips", result.getMonitoringTips(), "#0f172a"));
+            }
 
-            card.getChildren().addAll(nameLabel, badgeBox, progressBar, descLabel, matchedLabel, matchedFlow,
-                treatmentsLabel, treatmentsBox, helpBox);
-            
+            if (result.getRiskFactors() != null && !result.getRiskFactors().isEmpty()) {
+                card.getChildren().add(buildBulletSection("Common risk factors", result.getRiskFactors(), "#0f172a"));
+            }
+
+            card.getChildren().add(buildBulletSection(LanguageManager.getUILabel("when_to_seek_help"), 
+                List.of(disease.getWhenToSeekHelp() != null ? disease.getWhenToSeekHelp() : "Consult a qualified healthcare provider."), "#dc2626"));
+
+            if (result.getPrecautions() != null && !result.getPrecautions().isEmpty()) {
+                card.getChildren().add(buildBulletSection("Precautions & follow-up", result.getPrecautions(), "#0f172a"));
+            }
+
+            if (result.getSimilarConditions() != null && !result.getSimilarConditions().isEmpty()) {
+                FlowPane similarFlow = new FlowPane(8, 8);
+                similarFlow.setPrefWrapLength(680);
+                for (SimilarCondition sc : result.getSimilarConditions()) {
+                    if (sc.getName() != null) {
+                        String text = sc.getName();
+                        if (sc.getMatchPercentage() != null) {
+                            text += String.format(" (%.1f%%)", sc.getMatchPercentage());
+                        }
+                        Label chip = new Label(text);
+                        chip.setStyle("-fx-background-color: #e0e7ff; -fx-text-fill: #3730a3; -fx-padding: 6 12; -fx-background-radius: 10; -fx-font-size: 12px;");
+                        similarFlow.getChildren().add(chip);
+                    }
+                }
+                VBox similarBox = new VBox(6, new Label("Other possibilities to discuss:"), similarFlow);
+                ((Label) similarBox.getChildren().get(0)).setStyle("-fx-font-weight: bold; -fx-text-fill: #1f2937;");
+                card.getChildren().add(similarBox);
+            }
+
             return card;
         } catch (Exception e) {
             System.err.println("Error creating result card: " + e.getMessage());
             e.printStackTrace();
-            // Fallback: show error message
             Label errorLabel = new Label("Error displaying result: " + e.getMessage());
             errorLabel.setStyle("-fx-text-fill: #DC2626; -fx-font-size: 14px; -fx-padding: 20;");
             return errorLabel;
         }
+    }
+
+    private static FlowPane buildTagFlow(List<String> items, String background, String textColor) {
+        FlowPane flow = new FlowPane(8, 8);
+        flow.setPrefWrapLength(680);
+        if (items != null) {
+            for (String item : items) {
+                if (item != null && !item.isEmpty()) {
+                    Label badge = new Label(item);
+                    badge.setStyle(
+                        "-fx-background-color: " + background + ";" +
+                        "-fx-text-fill: " + textColor + ";" +
+                        "-fx-padding: 6 12;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-radius: 10;" +
+                        "-fx-border-color: " + textColor + "66;" +
+                        "-fx-border-width: 1.5;" +
+                        "-fx-font-size: 12px;" +
+                        "-fx-font-weight: bold;"
+                    );
+                    flow.getChildren().add(badge);
+                }
+            }
+        }
+        return flow;
+    }
+
+    private static VBox buildTagSection(String title, List<String> items, String background, String textColor) {
+        VBox container = new VBox(6);
+        Label sectionLabel = new Label(title + ":");
+        sectionLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #0f172a;");
+        FlowPane flow = buildTagFlow(items, background, textColor);
+        if (flow.getChildren().isEmpty()) {
+            Label none = new Label("None reported");
+            none.setStyle("-fx-text-fill: #64748b; -fx-font-size: 12px;");
+            container.getChildren().addAll(sectionLabel, none);
+        } else {
+            container.getChildren().addAll(sectionLabel, flow);
+        }
+        return container;
+    }
+
+    private static VBox buildBulletSection(String title, List<String> items, String textColor) {
+        VBox section = new VBox(6);
+        Label sectionTitle = new Label(title + ":");
+        sectionTitle.setStyle("-fx-font-weight: bold; -fx-text-fill: #0f172a;");
+        section.getChildren().add(sectionTitle);
+
+        if (items == null || items.isEmpty()) {
+            Label none = new Label("No data available.");
+            none.setStyle("-fx-text-fill: #64748b; -fx-font-size: 12px;");
+            section.getChildren().add(none);
+        } else {
+            VBox list = new VBox(4);
+            for (String item : items) {
+                if (item != null && !item.isEmpty()) {
+                    Label entry = new Label("• " + item);
+                    entry.setWrapText(true);
+                    entry.setStyle("-fx-text-fill: " + textColor + "; -fx-font-size: 13px;");
+                    list.getChildren().add(entry);
+                }
+            }
+            section.getChildren().add(list);
+        }
+        return section;
+    }
+
+    private static List<String> translateSymptomsList(List<String> symptoms) {
+        if (symptoms == null || symptoms.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return symptoms.stream()
+            .filter(item -> item != null && !item.isBlank())
+            .map(LanguageManager::translateSymptom)
+            .collect(Collectors.toList());
     }
     
     // Static helper methods for styling

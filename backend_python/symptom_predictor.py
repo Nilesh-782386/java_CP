@@ -25,6 +25,17 @@ class SymptomPredictor:
         self.symptoms_list = []
         self.diseases_list = []
         self.disease_info = {}
+        self.recommended_tests_map = self._build_recommended_tests()
+        self.risk_factor_map = self._build_risk_factors()
+        self.lifestyle_guidance = self._build_lifestyle_guidance()
+        self.monitoring_tips_map = self._build_monitoring_tips()
+        self.precaution_map = self._build_precaution_guidance()
+        self.red_flag_symptoms = {
+            'Chest Pain', 'Shortness of Breath', 'Sudden Weakness', 'Numbness',
+            'Confusion', 'Severe Headache', 'Difficulty Speaking', 'Rapid Heartbeat',
+            'High Fever', 'Severe Abdominal Pain', 'Bloody Vomit', 'Bloody Stool',
+            'Vision Problems', 'Difficulty Breathing', 'Loss of Consciousness'
+        }
         
         # Load or train model
         if os.path.exists(model_path):
@@ -45,6 +56,216 @@ class SymptomPredictor:
         else:
             # Create default disease info
             self.disease_info = self._create_default_disease_info()
+    
+    def _build_recommended_tests(self):
+        """Suggested investigations per condition."""
+        return {
+            'Common Cold': ['Rapid influenza antigen test (if high fever)', 'Covid-19 antigen test (if exposed)'],
+            'Influenza': ['Rapid influenza diagnostic test', 'Complete blood count'],
+            'Migraine': ['Neurological evaluation', 'MRI brain (if red flags present)'],
+            'Sinusitis': ['CT scan of sinuses (if recurrent)', 'Nasal endoscopy'],
+            'Bronchitis': ['Chest X-ray', 'Sputum culture (if productive cough)'],
+            'Pneumonia': ['Chest X-ray', 'Pulse oximetry', 'Complete blood count'],
+            'Gastroenteritis': ['Stool analysis', 'Electrolyte panel'],
+            'Urinary Tract Infection': ['Urine routine & microscopic exam', 'Urine culture & sensitivity'],
+            'Arthritis': ['ESR / CRP', 'X-ray of affected joints'],
+            'Hypertension': ['Blood pressure monitoring', 'Kidney function tests', 'ECG'],
+            'Diabetes': ['Fasting blood glucose', 'HbA1c', 'Urine microalbumin'],
+            'Asthma': ['Spirometry', 'Peak flow meter monitoring'],
+            'Allergies': ['Serum IgE', 'Skin prick test'],
+            'Anemia': ['Complete blood count', 'Serum ferritin'],
+            'Hypothyroidism': ['TSH, T3, T4', 'Lipid profile'],
+            'Hyperthyroidism': ['TSH, T3, T4', 'Thyroid uptake scan'],
+            'Depression': ['Psychiatric evaluation', 'Thyroid profile (rule-out)'],
+            'Anxiety': ['Psychological assessment', 'ECG (if palpitations)'],
+            'Gastroesophageal Reflux Disease': ['Upper GI endoscopy', 'Esophageal pH monitoring'],
+            'Irritable Bowel Syndrome': ['Stool routine', 'Colonoscopy (if alarm features)'],
+            'Osteoarthritis': ['X-ray of affected joints', 'Vitamin D levels'],
+            'Rheumatoid Arthritis': ['Rheumatoid factor', 'Anti-CCP antibodies'],
+            'Fibromyalgia': ['Sleep study', 'Vitamin D & B12 levels'],
+            'Chronic Fatigue Syndrome': ['Thyroid profile', 'CBC & metabolic panel'],
+            'Sleep Apnea': ['Polysomnography (sleep study)', 'Epworth sleepiness scale'],
+            'Chronic Obstructive Pulmonary Disease': ['Spirometry', 'Chest CT (if severe)'],
+            'Chronic Kidney Disease': ['Serum creatinine & eGFR', 'Urine albumin/creatinine ratio'],
+            'Liver Disease': ['Liver function tests', 'Abdominal ultrasound'],
+            'Heart Disease': ['ECG', 'Echocardiogram', 'Lipid profile'],
+            'Stroke': ['CT/MRI brain', 'Carotid Doppler']
+        }
+
+    def _build_risk_factors(self):
+        """Common risk factors for each condition."""
+        return {
+            'Common Cold': ['Recent exposure to infected individuals', 'Weakened immune system'],
+            'Influenza': ['Lack of vaccination', 'Chronic illnesses', 'Elderly or very young age'],
+            'Migraine': ['Family history of migraine', 'Irregular sleep patterns', 'Stress'],
+            'Sinusitis': ['Allergic rhinitis', 'Deviated nasal septum', 'Smoking'],
+            'Bronchitis': ['Smoking history', 'Exposure to pollutants', 'Weak immunity'],
+            'Pneumonia': ['Ages <5 or >65', 'Chronic lung disease', 'Smoking'],
+            'Gastroenteritis': ['Contaminated food/water', 'Travel history', 'Poor hygiene'],
+            'Urinary Tract Infection': ['Poor hydration', 'Female gender', 'Diabetes'],
+            'Arthritis': ['Age >45', 'Joint injuries', 'Obesity'],
+            'Hypertension': ['Family history', 'High sodium diet', 'Sedentary lifestyle'],
+            'Diabetes': ['Family history', 'Obesity', 'Sedentary lifestyle'],
+            'Asthma': ['Family history of allergies', 'Exposure to smoke', 'Cold weather'],
+            'Allergies': ['Family history', 'High pollen seasons'],
+            'Anemia': ['Iron deficient diet', 'Chronic blood loss'],
+            'Hypothyroidism': ['Autoimmune disorders', 'Family history'],
+            'Hyperthyroidism': ['Family history', 'Stress'],
+            'Depression': ['Chronic stress', 'Chemical imbalance', 'Family history'],
+            'Anxiety': ['Stressful life events', 'Family history', 'Caffeine intake'],
+            'Gastroesophageal Reflux Disease': ['Obesity', 'Late-night meals', 'Smoking'],
+            'Irritable Bowel Syndrome': ['Stress', 'Dietary triggers'],
+            'Osteoarthritis': ['Ageing', 'Obesity', 'Joint injuries'],
+            'Rheumatoid Arthritis': ['Autoimmune tendency', 'Female gender'],
+            'Fibromyalgia': ['Sleep disorders', 'Infections', 'Trauma'],
+            'Chronic Fatigue Syndrome': ['Recent infection', 'Mental stress'],
+            'Sleep Apnea': ['Obesity', 'Neck circumference > 40 cm'],
+            'Chronic Obstructive Pulmonary Disease': ['Smoking', 'Occupational exposure'],
+            'Chronic Kidney Disease': ['Diabetes', 'Hypertension', 'Family history'],
+            'Liver Disease': ['Alcohol use', 'Viral hepatitis', 'Obesity'],
+            'Heart Disease': ['High cholesterol', 'Hypertension', 'Smoking'],
+            'Stroke': ['Hypertension', 'Atrial fibrillation', 'Smoking']
+        }
+
+    def _build_lifestyle_guidance(self):
+        """Self-care and lifestyle suggestions."""
+        return {
+            'Common Cold': ['Rest and stay hydrated', 'Humidify the air', 'Over-the-counter symptom relief'],
+            'Influenza': ['Stay home and rest', 'Hydrate frequently', 'Monitor fever regularly'],
+            'Migraine': ['Maintain headache diary', 'Avoid triggers', 'Ensure adequate sleep'],
+            'Sinusitis': ['Use saline nasal rinse', 'Steam inhalation twice daily', 'Avoid allergens'],
+            'Bronchitis': ['Avoid smoking', 'Hydrate to loosen mucus', 'Use prescribed inhalers'],
+            'Pneumonia': ['Follow antibiotic regimen', 'Practice breathing exercises', 'Rest adequately'],
+            'Gastroenteritis': ['Follow BRAT diet', 'Take oral rehydration salts', 'Avoid dairy temporarily'],
+            'Urinary Tract Infection': ['Increase water intake', 'Avoid caffeine & alcohol', 'Complete antibiotic course'],
+            'Arthritis': ['Engage in low-impact exercise', 'Maintain healthy weight', 'Use warm compresses'],
+            'Hypertension': ['Reduce salt intake', 'Exercise 30 minutes daily', 'Monitor BP at home'],
+            'Diabetes': ['Monitor blood glucose', 'Adopt balanced carbohydrate diet', 'Exercise regularly'],
+            'Asthma': ['Use spacers/inhalers properly', 'Avoid known triggers', 'Monitor peak flow'],
+            'Allergies': ['Use protective masks outdoors', 'Keep living area dust-free', 'Use antihistamines as prescribed'],
+            'Anemia': ['Eat iron-rich foods', 'Combine iron with vitamin C sources', 'Avoid tea/coffee near meals'],
+            'Hypothyroidism': ['Take thyroid medication on empty stomach', 'Maintain consistent timing', 'Exercise regularly'],
+            'Hyperthyroidism': ['Reduce caffeine intake', 'Practice relaxation techniques'],
+            'Depression': ['Maintain routine', 'Engage in physical activity', 'Reach out to support system'],
+            'Anxiety': ['Practice relaxation breathing', 'Limit stimulants', 'Maintain sleep hygiene'],
+            'Gastroesophageal Reflux Disease': ['Eat small frequent meals', 'Elevate head of bed', 'Avoid late-night meals'],
+            'Irritable Bowel Syndrome': ['Follow low-FODMAP diet', 'Manage stress', 'Keep food diary'],
+            'Osteoarthritis': ['Regular stretching', 'Use supportive footwear', 'Manage body weight'],
+            'Rheumatoid Arthritis': ['Follow medication schedule', 'Practice joint-protecting techniques'],
+            'Fibromyalgia': ['Establish sleep schedule', 'Gentle aerobic exercise', 'Stress management'],
+            'Chronic Fatigue Syndrome': ['Pace activities', 'Balanced diet', 'Gentle stretching'],
+            'Sleep Apnea': ['Maintain healthy weight', 'Avoid alcohol before bed', 'Sleep on your side'],
+            'Chronic Obstructive Pulmonary Disease': ['Participate in pulmonary rehab', 'Avoid smoke exposure'],
+            'Chronic Kidney Disease': ['Limit sodium & potassium (as advised)', 'Avoid NSAIDs'],
+            'Liver Disease': ['Avoid alcohol', 'Eat balanced low-fat diet'],
+            'Heart Disease': ['Follow heart-healthy diet', 'Take medications as prescribed'],
+            'Stroke': ['Adhere to rehabilitation plan', 'Monitor blood pressure', 'Follow antiplatelet therapy']
+        }
+
+    def _evaluate_triage(self, disease_info, selected_symptoms, missing_critical):
+        severity = disease_info.get('severity', 'moderate')
+        red_flags = sorted([sym for sym in selected_symptoms if sym in self.red_flag_symptoms])
+
+        level = "Routine"
+        color = "#0ea5e9"  # teal blue
+        message = "Monitor symptoms and schedule a routine consultation for confirmation."
+
+        if red_flags:
+            level = "Emergency"
+            color = "#dc2626"
+            red_flag_text = ", ".join(red_flags)
+            message = (
+                f"Emergency warning signs detected ({red_flag_text}). Seek immediate medical attention or call emergency services."
+            )
+        elif severity == "high":
+            level = "Urgent"
+            color = "#f97316"
+            message = "Potentially serious condition detected. Arrange urgent medical review within 24 hours."
+        elif missing_critical:
+            level = "Priority"
+            color = "#facc15"
+            missing_text = ", ".join(missing_critical)
+            message = (
+                f"Key hallmark symptoms ({missing_text}) are not reported. Consider medical visit soon to rule out complications."
+            )
+        elif severity == "moderate":
+            level = "Priority"
+            color = "#22c55e"
+            message = "Arrange a consultation in the next few days to confirm diagnosis and start treatment."
+
+        return {
+            "level": level,
+            "message": message,
+            "color": color
+        }, red_flags
+
+    def _get_specialist_for_condition(self, disease_name):
+        specialist_map = {
+            'Common Cold': 'Primary Care Physician',
+            'Influenza': 'Primary Care Physician',
+            'Migraine': 'Neurologist',
+            'Sinusitis': 'ENT Specialist',
+            'Bronchitis': 'Pulmonologist',
+            'Pneumonia': 'Pulmonologist / Emergency Physician',
+            'Gastroenteritis': 'Gastroenterologist',
+            'Urinary Tract Infection': 'Urologist',
+            'Arthritis': 'Rheumatologist',
+            'Hypertension': 'Cardiologist',
+            'Diabetes': 'Endocrinologist',
+            'Asthma': 'Pulmonologist',
+            'Allergies': 'Allergist / Immunologist',
+            'Anemia': 'Hematologist',
+            'Hypothyroidism': 'Endocrinologist',
+            'Hyperthyroidism': 'Endocrinologist',
+            'Depression': 'Psychiatrist',
+            'Anxiety': 'Psychiatrist',
+            'Gastroesophageal Reflux Disease': 'Gastroenterologist',
+            'Irritable Bowel Syndrome': 'Gastroenterologist',
+            'Osteoarthritis': 'Orthopedic Specialist',
+            'Rheumatoid Arthritis': 'Rheumatologist',
+            'Fibromyalgia': 'Rheumatologist / Pain Specialist',
+            'Chronic Fatigue Syndrome': 'Internal Medicine Specialist',
+            'Sleep Apnea': 'Sleep Medicine Specialist',
+            'Chronic Obstructive Pulmonary Disease': 'Pulmonologist',
+            'Chronic Kidney Disease': 'Nephrologist',
+            'Liver Disease': 'Hepatologist',
+            'Heart Disease': 'Cardiologist',
+            'Stroke': 'Neurologist'
+        }
+        return specialist_map.get(disease_name, 'Primary Care Physician')
+
+    def _build_monitoring_tips(self):
+        """Home monitoring guidance."""
+        return {
+            'Hypertension': ['Track blood pressure twice daily', 'Log readings for doctor review'],
+            'Diabetes': ['Check fasting glucose daily', 'Monitor for hypo/hyperglycemia symptoms'],
+            'Heart Disease': ['Monitor chest discomfort patterns', 'Record heart rate trends'],
+            'Stroke': ['Monitor for new weakness or speech difficulty', 'Keep emergency numbers handy'],
+            'Asthma': ['Use peak flow meter', 'Note inhaler usage frequency'],
+            'COPD': ['Track oxygen saturation if available', 'Measure exercise tolerance'],
+            'Chronic Kidney Disease': ['Monitor urine output changes', 'Track blood pressure daily'],
+            'Liver Disease': ['Watch for jaundice or swelling', 'Track weight changes'],
+            'Anemia': ['Monitor fatigue levels', 'Note shortness of breath on exertion'],
+            'Depression': ['Track mood variations', 'Maintain sleep log'],
+            'Anxiety': ['Monitor panic episodes', 'Practice calming routines']
+        }
+
+    def _build_precaution_guidance(self):
+        """Precautions and follow up advice."""
+        return {
+            'Common Cold': ['Seek care if fever >38.5°C persists', 'Watch for breathing difficulty'],
+            'Influenza': ['Avoid contact with high-risk individuals', 'Seek care if breathing worsens'],
+            'Pneumonia': ['Complete antibiotics fully', 'Seek urgent care if oxygen <92%'],
+            'Bronchitis': ['Avoid smoking environments', 'Seek care if symptoms >14 days'],
+            'Hypertension': ['Emergency if BP >180/120 with symptoms', 'Routine follow up monthly'],
+            'Heart Disease': ['Emergency if chest pain lasts >5 min', 'Follow cardiologist plan'],
+            'Stroke': ['Call emergency services for sudden neurological changes'],
+            'Diabetes': ['Seek care if blood sugar >300 mg/dL persistently', 'Follow diabetic diet'],
+            'Asthma': ['Carry rescue inhaler at all times', 'Follow action plan'],
+            'COPD': ['Use oxygen as prescribed', 'Seek care for severe breathlessness'],
+            'Chronic Kidney Disease': ['Avoid dehydration', 'Maintain nephrologist visits'],
+            'Liver Disease': ['Avoid hepatotoxic drugs', 'Seek care for abdominal swelling']
+        }
     
     def _create_default_disease_info(self):
         """Create default disease information for all diseases in the model"""
@@ -229,6 +450,8 @@ class SymptomPredictor:
                 print("WARNING: No symptom names after conversion")
                 return []
             
+            selected_symptom_set = set(symptom_names)
+
             # Create feature vector
             feature_vector = np.zeros(len(self.symptoms_list))
             matched_count = 0
@@ -257,12 +480,17 @@ class SymptomPredictor:
             
             # Get top predictions
             top_indices = np.argsort(probabilities)[::-1][:5]
+            top_candidates = [
+                (self.diseases_list[i], float(probabilities[i]) * 100.0)
+                for i in top_indices if probabilities[i] > 0.005
+            ]
             results = []
             
             for idx in top_indices:
-                if probabilities[idx] > 0.01:  # Only include if probability > 1%
+                probability = float(probabilities[idx])
+                if probability > 0.01:  # Only include if probability > 1%
                     disease_name = self.diseases_list[idx]
-                    match_percentage = probabilities[idx] * 100
+                    match_percentage = probability * 100
                     
                     # Get disease info
                     disease_id = self._get_disease_id(disease_name)
@@ -278,6 +506,46 @@ class SymptomPredictor:
                     
                     # Find matched symptoms
                     matched_symptoms = [s for s in symptom_names if s in disease_info.get('symptoms', [])]
+                    condition_symptoms = disease_info.get('symptoms', [])
+                    missing_symptoms = [s for s in condition_symptoms if s not in matched_symptoms]
+                    critical_symptoms = condition_symptoms[:min(3, len(condition_symptoms))]
+                    missing_critical = [s for s in critical_symptoms if s not in matched_symptoms]
+                    symptom_coverage = len(matched_symptoms) / max(len(condition_symptoms), 1)
+
+                    confidence_score = (probability * 0.6) + (symptom_coverage * 0.4)
+                    if probability < 0.05 and symptom_coverage < 0.25:
+                        confidence_level = "Low"
+                    elif confidence_score >= 0.7:
+                        confidence_level = "High"
+                    elif confidence_score >= 0.45:
+                        confidence_level = "Moderate"
+                    else:
+                        confidence_level = "Low"
+
+                    confidence_info = {
+                        "score": round(confidence_score * 100, 1),
+                        "level": confidence_level,
+                        "modelProbability": round(probability * 100, 1),
+                        "symptomCoverage": round(symptom_coverage * 100, 1),
+                        "explanation": (
+                            f"Matches {len(matched_symptoms)} of {len(condition_symptoms)} hallmark symptoms "
+                            f"with model confidence {probability * 100:.1f}%."
+                        )
+                    }
+
+                    triage_info, red_flags_triggered = self._evaluate_triage(
+                        disease_info,
+                        selected_symptom_set,
+                        missing_critical
+                    )
+
+                    similar_conditions = []
+                    for other_name, other_prob in top_candidates:
+                        if other_name != disease_name and len(similar_conditions) < 3:
+                            similar_conditions.append({
+                                "name": other_name,
+                                "matchPercentage": round(other_prob, 2)
+                            })
                     
                     results.append({
                         "disease": {
@@ -290,7 +558,24 @@ class SymptomPredictor:
                             "whenToSeekHelp": disease_info.get("whenToSeekHelp", "")
                         },
                         "matchPercentage": round(match_percentage, 2),
-                        "matchedSymptoms": matched_symptoms
+                        "matchedSymptoms": matched_symptoms,
+                        "missingSymptoms": missing_symptoms,
+                        "criticalSymptomsMissing": missing_critical,
+                        "symptomCoverage": round(symptom_coverage * 100, 1),
+                        "confidence": confidence_info,
+                        "triage": {
+                            "level": triage_info["level"],
+                            "message": triage_info["message"],
+                            "color": triage_info["color"],
+                            "specialist": self._get_specialist_for_condition(disease_name)
+                        },
+                        "recommendedTests": self.recommended_tests_map.get(disease_name, []),
+                        "riskFactors": self.risk_factor_map.get(disease_name, []),
+                        "lifestyleAdvice": self.lifestyle_guidance.get(disease_name, []),
+                        "monitoringTips": self.monitoring_tips_map.get(disease_name, []),
+                        "precautions": self.precaution_map.get(disease_name, []),
+                        "similarConditions": similar_conditions,
+                        "redFlags": red_flags_triggered
                     })
             
             print(f"Returning {len(results)} prediction results")  # Debug

@@ -33,18 +33,22 @@ class ReportOCR:
     
     def __init__(self):
         self.parameter_keywords = {
-            'hemoglobin': ['hemoglobin', 'hb', 'hgb', 'haemoglobin'],
-            'wbc': ['wbc', 'white blood cell', 'leukocyte', 'white cell count'],
-            'platelets': ['platelet', 'plt', 'thrombocyte'],
+            'hemoglobin': ['hemoglobin', 'haemoglobin', 'hb', 'hgb'],
+            'wbc': ['wbc', 'white blood cell', 'leukocyte', 'white cell count', 'w.b.c'],
+            'platelets': ['platelet', 'plt', 'thrombocyte', 'platelet count'],
             'rbc': ['rbc', 'red blood cell', 'erythrocyte', 'red cell count'],
-            'blood_sugar_fasting': ['blood sugar', 'glucose', 'fasting glucose', 'fbs', 'blood glucose', 'sugar'],
-            'total_cholesterol': ['cholesterol', 'total cholesterol', 'chol', 'tc'],
+            'blood_sugar_fasting': [
+                'fasting blood sugar', 'blood sugar fasting', 'fasting glucose', 'fbs',
+                'blood glucose', 'sugar (fasting)', 'glucose fasting'
+            ],
+            'total_cholesterol': ['total cholesterol', 'cholesterol total', 'total chol', 'chol'],
             'hdl_cholesterol': ['hdl', 'hdl cholesterol', 'high density lipoprotein'],
             'ldl_cholesterol': ['ldl', 'ldl cholesterol', 'low density lipoprotein'],
-            'creatinine': ['creatinine', 'creat'],
-            'sgot': ['sgot', 'ast', 'aspartate', 'aspartate aminotransferase'],
-            'sgpt': ['sgpt', 'alt', 'alanine', 'alanine aminotransferase']
+            'creatinine': ['creatinine', 'serum creat'],
+            'sgot': ['sgot', 'ast', 'aspartate aminotransferase'],
+            'sgpt': ['sgpt', 'alt', 'alanine aminotransferase']
         }
+        self.tesseract_ready = self._check_tesseract()
     
     def preprocess_image(self, image: Image.Image) -> Image.Image:
         """Preprocess image to improve OCR accuracy"""
@@ -75,8 +79,10 @@ class ReportOCR:
         # Preprocess image
         processed_image = self.preprocess_image(image)
         
-        # Use Tesseract OCR with custom config
-        custom_config = r'--oem 3 --psm 6'  # Assume uniform block of text
+        if not self.tesseract_ready:
+            raise RuntimeError("Tesseract OCR engine not available. Install Tesseract or set TESSERACT_CMD env path.")
+
+        custom_config = r'--oem 3 --psm 6'
         text = pytesseract.image_to_string(processed_image, config=custom_config)
         
         return text
@@ -85,29 +91,39 @@ class ReportOCR:
         """Extract numeric value for a parameter from OCR text"""
         # Clean text
         text_lower = text.lower()
-        
-        # Find lines containing parameter keywords
-        lines = text.split('\n')
+        normalized = text_lower.replace(',', '.')
+
+        lines = normalized.split('\n')
         for line in lines:
-            line_lower = line.lower()
+            line_lower = line.strip()
+            if not line_lower:
+                continue
             
-            # Check if line contains any keyword
             if any(keyword in line_lower for keyword in param_keywords):
-                # Extract numbers from the line
-                # Look for patterns like: "Hemoglobin: 12.5" or "HB 14.2" or "12.5 g/dL"
-                numbers = re.findall(r'\d+\.?\d*', line)
-                
-                if numbers:
+                cleaned_line = re.sub(r'[\|\t]+', ' ', line_lower)
+                cleaned_line = cleaned_line.replace(' x10^3', '000').replace(' x10³', '000')
+                matches = re.findall(r'([-+]?\d*\.\d+|\d+)', cleaned_line)
+                if matches:
                     try:
-                        # Usually the first number after the parameter name is the value
-                        # Try to find the most likely value (usually 1-200 range for most parameters)
-                        for num_str in numbers:
-                            value = float(num_str)
-                            # Filter out unlikely values (like years, dates, etc.)
-                            if 0.1 <= value <= 1000:
+                        for num_str in matches:
+                            try:
+                                value = float(num_str)
+                            except ValueError:
+                                continue
+                            if 0.05 <= value <= 1000:
                                 return value
                     except ValueError:
                         continue
+
+        pattern = r'(' + '|'.join([re.escape(k) for k in param_keywords]) + r')[^\d]{0,10}([-+]?\d*\.\d+|\d+)'
+        inline_matches = re.findall(pattern, normalized)
+        for _, value_str in inline_matches:
+            try:
+                value = float(value_str)
+                if 0.05 <= value <= 1000:
+                    return value
+            except ValueError:
+                continue
         
         return None
     
@@ -143,6 +159,13 @@ class ReportOCR:
         """
         try:
             # Load image from bytes
+            if not self.tesseract_ready:
+                return {
+                    "success": False,
+                    "error": "TesseractNotFound",
+                    "message": "Tesseract OCR engine not available. Install Tesseract or set TESSERACT_CMD environment variable."
+                }
+
             image = Image.open(BytesIO(image_data))
             
             # Extract text using OCR
@@ -186,4 +209,12 @@ class ReportOCR:
                 "extractedValues": {},
                 "message": f"Failed to decode image: {str(e)}"
             }
+
+    def _check_tesseract(self):
+        try:
+            pytesseract.get_tesseract_version()
+            return True
+        except Exception:
+            print("WARNING: Tesseract OCR not found. Image scanning will be disabled until Tesseract is installed.")
+            return False
 

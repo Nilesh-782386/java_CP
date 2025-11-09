@@ -22,6 +22,8 @@ import javafx.stage.FileChooser;
 import javafx.application.Platform;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,6 +50,12 @@ public class ReportAnalyzerView extends BorderPane {
     private Button exportButton;
     private Button copyButton;
     private Button printButton;
+    private VBox ocrSummaryBox;
+    private TextArea ocrTextArea;
+    private TitledPane ocrDetailsPane;
+    private Map<String, Object> lastExtractedValues = new HashMap<>();
+    private String lastOcrText;
+    private GridPane ocrValuesGrid;
 
     private static final String[][] BLOOD_PARAMETERS = {
         {"hemoglobin", "Hemoglobin", "g/dL", "12-16", "false"},
@@ -227,7 +235,55 @@ public class ReportAnalyzerView extends BorderPane {
         printButton.setDisable(true);
         
         actionButtonsBox.getChildren().addAll(exportButton, copyButton, printButton);
-        
+
+        ocrSummaryBox = new VBox(10);
+        ocrSummaryBox.setStyle(
+            "-fx-background-color: #f0fdf4;" +
+            "-fx-border-color: #22c55e;" +
+            "-fx-border-width: 2;" +
+            "-fx-border-radius: 12;" +
+            "-fx-background-radius: 12;" +
+            "-fx-padding: 14;"
+        );
+        ocrSummaryBox.setVisible(false);
+        ocrSummaryBox.setManaged(false);
+
+        Label ocrTitle = new Label("📷 OCR Extraction Summary");
+        ocrTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+        ocrTitle.setTextFill(Color.web("#166534"));
+
+        HBox ocrActions = new HBox(8);
+        ocrActions.setAlignment(Pos.CENTER_LEFT);
+
+        Button copyOcrButton = new Button("Copy Summary");
+        copyOcrButton.setStyle("-fx-background-color: #16a34a; -fx-text-fill: white; -fx-font-weight: bold;");
+        copyOcrButton.setOnAction(e -> copyOcrSummaryToClipboard());
+
+        Button clearOcrButton = new Button("Clear");
+        clearOcrButton.setStyle("-fx-background-color: #dc2626; -fx-text-fill: white; -fx-font-weight: bold;");
+        clearOcrButton.setOnAction(e -> clearOcrSummary());
+
+        Button analyzeOcrButton = new Button("Analyze Again");
+        analyzeOcrButton.setStyle("-fx-background-color: #0f766e; -fx-text-fill: white; -fx-font-weight: bold;");
+        analyzeOcrButton.setOnAction(e -> analyzeReport());
+
+        ocrActions.getChildren().addAll(copyOcrButton, clearOcrButton, analyzeOcrButton);
+
+        ocrTextArea = new TextArea();
+        ocrTextArea.setEditable(false);
+        ocrTextArea.setWrapText(true);
+        ocrTextArea.setPrefRowCount(6);
+        ocrTextArea.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
+
+        ocrDetailsPane = new TitledPane("Raw OCR Text (preview)", ocrTextArea);
+        ocrDetailsPane.setExpanded(false);
+
+        ocrValuesGrid = new GridPane();
+        ocrValuesGrid.setHgap(12);
+        ocrValuesGrid.setVgap(6);
+
+        ocrSummaryBox.getChildren().addAll(ocrTitle, ocrActions, ocrValuesGrid, ocrDetailsPane);
+
         resultsPane = new ScrollPane();
         resultsPane.setFitToWidth(true);
         resultsPane.setFitToHeight(true);
@@ -248,7 +304,7 @@ public class ReportAnalyzerView extends BorderPane {
         emptyState.getChildren().addAll(emptyLabel, emptyDesc);
         resultsPane.setContent(emptyState);
 
-        rightPanel.getChildren().addAll(actionButtonsBox, resultsPane);
+        rightPanel.getChildren().addAll(actionButtonsBox, ocrSummaryBox, resultsPane);
 
         return rightPanel;
     }
@@ -420,6 +476,8 @@ public class ReportAnalyzerView extends BorderPane {
                         @SuppressWarnings("unchecked")
                         Map<String, Object> extractedValues = (Map<String, Object>) result.get("extractedValues");
                         
+                        renderOcrSummary(extractedValues, (String) result.get("ocrText"));
+
                         if (extractedValues != null && !extractedValues.isEmpty()) {
                             // Populate input fields with extracted values
                             int populatedCount = 0;
@@ -439,9 +497,14 @@ public class ReportAnalyzerView extends BorderPane {
                                 "Successfully extracted " + populatedCount + " parameter(s) from image!"
                             );
                             
-                            // Optionally auto-analyze
-                            if (populatedCount > 0) {
-                                Platform.runLater(() -> analyzeReport());
+                            // Optionally auto-analyze when required values present
+                            if (hasAllRequiredValues(extractedValues)) {
+                                Platform.runLater(this::analyzeReport);
+                            } else if (populatedCount > 0) {
+                                NotificationHelper.showInfoNotification(
+                                    (StackPane) getScene().getRoot(),
+                                    "Some required parameters are still missing. Please review highlighted fields before analysis."
+                                );
                             }
                         } else {
                             NotificationHelper.showInfoNotification(
@@ -454,6 +517,10 @@ public class ReportAnalyzerView extends BorderPane {
                         if (errorMsg == null) {
                             errorMsg = (String) result.get("error");
                         }
+                        if (errorMsg != null && errorMsg.toLowerCase().contains("tesseract")) {
+                            errorMsg += "\n\nTesseract OCR engine was not found. Please install Tesseract and restart the backend.";
+                        }
+                        clearOcrSummary();
                         showError("Image Processing Failed", 
                             "Failed to process image:\n" + errorMsg + 
                             "\n\nPlease ensure:\n" +
@@ -476,18 +543,191 @@ public class ReportAnalyzerView extends BorderPane {
                                    "2. Verify Tesseract OCR is installed";
                     }
                     
+                    clearOcrSummary();
                     showError("Upload Error", errorMsg);
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     loadingIndicator.setVisible(false);
                     analyzeButton.setDisable(false);
+                    clearOcrSummary();
                     showError("Error", 
                         "An error occurred while processing the image:\n" + e.getMessage() + 
                         "\n\nYou can still enter values manually.");
                 });
             }
         }).start();
+    }
+
+    private void renderOcrSummary(Map<String, Object> extractedValues, String ocrText) {
+        if (ocrSummaryBox == null || ocrValuesGrid == null) {
+            return;
+        }
+
+        lastExtractedValues = extractedValues != null ? new HashMap<>(extractedValues) : new HashMap<>();
+        lastOcrText = ocrText;
+
+        ocrValuesGrid.getChildren().clear();
+
+        if (lastExtractedValues.isEmpty()) {
+            Label empty = new Label("No numeric values could be detected. Please verify the report or enter values manually.");
+            empty.setStyle("-fx-text-fill: #166534; -fx-font-size: 13px;");
+            ocrValuesGrid.add(empty, 0, 0);
+        } else {
+            int row = 0;
+            for (String[] param : BLOOD_PARAMETERS) {
+                String key = param[0];
+                if (lastExtractedValues.containsKey(key)) {
+                    String label = param[1];
+                    String unit = param[2];
+                    Object valueObj = lastExtractedValues.get(key);
+                    String displayValue = String.valueOf(valueObj);
+                    double numericValue;
+                    boolean numeric = true;
+                    try {
+                        numericValue = Double.parseDouble(displayValue);
+                    } catch (NumberFormatException ex) {
+                        numeric = false;
+                        numericValue = 0;
+                    }
+
+                    Label nameLabel = new Label(label + ":");
+                    nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #166534;");
+
+                    Label valueLabel = new Label(
+                        numeric ? String.format("%.2f %s", numericValue, unit) : displayValue + " " + unit
+                    );
+                    valueLabel.setStyle("-fx-text-fill: #0b4a32;");
+
+                    ocrValuesGrid.add(nameLabel, 0, row);
+                    ocrValuesGrid.add(valueLabel, 1, row);
+                    row++;
+                }
+            }
+        }
+
+        if (ocrText != null && !ocrText.isBlank()) {
+            ocrTextArea.setText(ocrText.trim());
+            ocrDetailsPane.setVisible(true);
+            ocrDetailsPane.setManaged(true);
+        } else {
+            ocrTextArea.clear();
+            ocrDetailsPane.setVisible(false);
+            ocrDetailsPane.setManaged(false);
+        }
+
+        ocrSummaryBox.setVisible(true);
+        ocrSummaryBox.setManaged(true);
+    }
+
+    private void clearOcrSummary() {
+        lastExtractedValues.clear();
+        lastOcrText = null;
+        if (ocrValuesGrid != null) {
+            ocrValuesGrid.getChildren().clear();
+        }
+        if (ocrTextArea != null) {
+            ocrTextArea.clear();
+        }
+        if (ocrSummaryBox != null) {
+            ocrSummaryBox.setVisible(false);
+            ocrSummaryBox.setManaged(false);
+        }
+    }
+
+    private void copyOcrSummaryToClipboard() {
+        if ((lastExtractedValues == null || lastExtractedValues.isEmpty()) && (lastOcrText == null || lastOcrText.isBlank())) {
+            StackPane root = getScene() != null && getScene().getRoot() instanceof StackPane
+                ? (StackPane) getScene().getRoot()
+                : null;
+            if (root != null) {
+                NotificationHelper.showInfoNotification(root, "No OCR summary available to copy.");
+            }
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("OCR Extraction Summary\n");
+        sb.append("======================\n");
+        if (lastExtractedValues != null && !lastExtractedValues.isEmpty()) {
+            for (String[] param : BLOOD_PARAMETERS) {
+                String key = param[0];
+                if (lastExtractedValues.containsKey(key)) {
+                    sb.append(String.format("%s: %s %s\n", param[1], lastExtractedValues.get(key), param[2]));
+                }
+            }
+            // Include any additional keys not in default list
+            for (String key : lastExtractedValues.keySet()) {
+                boolean known = false;
+                for (String[] param : BLOOD_PARAMETERS) {
+                    if (param[0].equals(key)) {
+                        known = true;
+                        break;
+                    }
+                }
+                if (!known) {
+                    sb.append(String.format("%s: %s\n", key, lastExtractedValues.get(key)));
+                }
+            }
+        } else {
+            sb.append("No values extracted.\n");
+        }
+
+        if (lastOcrText != null && !lastOcrText.isBlank()) {
+            sb.append("\nRaw OCR Text Preview:\n");
+            sb.append(lastOcrText.trim());
+        }
+
+        ClipboardContent content = new ClipboardContent();
+        content.putString(sb.toString());
+        Clipboard.getSystemClipboard().setContent(content);
+
+        StackPane root = getScene() != null && getScene().getRoot() instanceof StackPane
+            ? (StackPane) getScene().getRoot()
+            : null;
+        if (root != null) {
+            NotificationHelper.showSuccessNotification(root, "OCR summary copied to clipboard.");
+        } else {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Copied");
+            alert.setHeaderText(null);
+            alert.setContentText("OCR summary copied to clipboard.");
+            alert.show();
+        }
+    }
+
+    private String getParameterLabel(String key) {
+        for (String[] param : BLOOD_PARAMETERS) {
+            if (param[0].equals(key)) {
+                return param[1];
+            }
+        }
+        return key;
+    }
+
+    private boolean hasAllRequiredValues(Map<String, Object> values) {
+        if (values == null || values.isEmpty()) {
+            return false;
+        }
+        for (String[] param : BLOOD_PARAMETERS) {
+            String key = param[0];
+            boolean optional = Boolean.parseBoolean(param[4]);
+            if (!optional) {
+                Object val = values.get(key);
+                if (val == null) {
+                    return false;
+                }
+                try {
+                    double numeric = Double.parseDouble(String.valueOf(val));
+                    if (numeric <= 0) {
+                        return false;
+                    }
+                } catch (NumberFormatException ex) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private void displayAnalysis(ReportAnalysis analysis) {

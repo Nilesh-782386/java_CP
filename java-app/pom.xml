@@ -58,6 +58,13 @@
             <version>5.2.1</version>
         </dependency>
 
+        <!-- JSONObject support -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20240205</version>
+        </dependency>
+
         <!-- MySQL JDBC Driver -->
         <dependency>
             <groupId>com.mysql</groupId>
