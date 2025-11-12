@@ -42,7 +42,7 @@ class AdvancedRiskPredictor:
                 random_state=42
             )),
             
-            ('lgb', L+GBMClassifier(
+            ('lgb', LGBMClassifier(
                 n_estimators=100,
                 max_depth=6,
                 learning_rate=0.1,
