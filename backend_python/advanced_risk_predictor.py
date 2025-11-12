@@ -41,7 +41,8 @@ class AdvancedRiskPredictor:
                 eval_metric='logloss',
                 random_state=42
             )),
-            ('lgb', LGBMClassifier(
+            
+            ('lgb', L+GBMClassifier(
                 n_estimators=100,
                 max_depth=6,
                 learning_rate=0.1,

@@ -1,5 +1,9 @@
 package com.smartheal.views;
 
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import com.smartheal.api.ApiClient;
 import com.smartheal.dao.HistoryDAO;
 import com.smartheal.models.CostEstimation;
@@ -7,22 +11,28 @@ import com.smartheal.utils.FileExporter;
 import com.smartheal.utils.NotificationHelper;
 import com.smartheal.utils.ReportFormatter;
 import com.smartheal.utils.UsageTracker;
-import javafx.scene.layout.StackPane;
+
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.Locale;
 
 public class CostEstimatorView extends BorderPane {
     private final ApiClient apiClient;
