@@ -16,7 +16,6 @@ public class DashboardView extends BorderPane {
     private QuickStatsPanel statsPanel;
     private Runnable onSymptomCheckerClick;
     private Runnable onHealthChatbotClick;
-    private Runnable onTestLookupClick;
     private Runnable onCostEstimatorClick;
     private Runnable onReportAnalyzerClick;
     private Runnable onRiskAssessmentClick;
@@ -24,7 +23,6 @@ public class DashboardView extends BorderPane {
     // Store card references to update click handlers
     private VBox symptomCard;
     private VBox chatbotCard;
-    private VBox testLookupCard;
     private VBox costEstimatorCard;
     private VBox reportAnalyzerCard;
     private VBox riskAssessmentCard;
@@ -114,15 +112,6 @@ public class DashboardView extends BorderPane {
             "CHATBOT"
         );
 
-        // Test Lookup Card
-        testLookupCard = createModuleCard(
-            "🔍",
-            "Test Lookup",
-            "Discover which medical tests are recommended for specific conditions and which ones to avoid",
-            "#22D3EE",
-            "TEST_LOOKUP"
-        );
-
         // Cost Estimator Card
         costEstimatorCard = createModuleCard(
             "💰",
@@ -150,13 +139,12 @@ public class DashboardView extends BorderPane {
             "RISK_ASSESSMENT"
         );
 
-        // Add cards to grid (2 rows, 3 columns with 6 items)
+        // Add cards to grid (2 rows, 3 columns with 5 items)
         gridPane.add(symptomCard, 0, 0);
         gridPane.add(chatbotCard, 1, 0);
-        gridPane.add(testLookupCard, 2, 0);
-        gridPane.add(costEstimatorCard, 0, 1);
-        gridPane.add(reportAnalyzerCard, 1, 1);
-        gridPane.add(riskAssessmentCard, 2, 1);
+        gridPane.add(costEstimatorCard, 2, 0);
+        gridPane.add(reportAnalyzerCard, 0, 1);
+        gridPane.add(riskAssessmentCard, 1, 1);
 
         // Set column constraints for equal width
         ColumnConstraints col1 = new ColumnConstraints();
@@ -282,9 +270,6 @@ public class DashboardView extends BorderPane {
             case "CHATBOT":
                 callback = onHealthChatbotClick;
                 break;
-            case "TEST_LOOKUP":
-                callback = onTestLookupClick;
-                break;
             case "COST_ESTIMATOR":
                 callback = onCostEstimatorClick;
                 break;
@@ -323,9 +308,9 @@ public class DashboardView extends BorderPane {
                 System.err.println("[WARNING] Current callback state:");
                 System.err.println("  - onSymptomCheckerClick: " + (onSymptomCheckerClick != null));
                 System.err.println("  - onHealthChatbotClick: " + (onHealthChatbotClick != null));
-                System.err.println("  - onTestLookupClick: " + (onTestLookupClick != null));
                 System.err.println("  - onCostEstimatorClick: " + (onCostEstimatorClick != null));
                 System.err.println("  - onReportAnalyzerClick: " + (onReportAnalyzerClick != null));
+                System.err.println("  - onRiskAssessmentClick: " + (onRiskAssessmentClick != null));
             }
         });
         
@@ -352,14 +337,6 @@ public class DashboardView extends BorderPane {
         this.onHealthChatbotClick = callback;
         if (chatbotCard != null) {
             setupCardClickHandler(chatbotCard, "CHATBOT", "Health Chatbot");
-        }
-    }
-
-    public void setOnTestLookupClick(Runnable callback) {
-        System.out.println("Setting Test Lookup callback: " + (callback != null ? "OK" : "NULL"));
-        this.onTestLookupClick = callback;
-        if (testLookupCard != null) {
-            setupCardClickHandler(testLookupCard, "TEST_LOOKUP", "Test Lookup");
         }
     }
 

@@ -6,9 +6,9 @@ JavaFX desktop application for the SMART Health Guide+ system. This application 
 
 - **Symptom Checker**: Select symptoms and get educational information about possible conditions
 - **Health Chatbot**: Ask health-related questions and get instant educational answers
-- **Test Lookup**: Discover recommended medical tests for specific conditions
 - **Cost Estimator**: Get estimated costs for medical treatments at different hospital types
 - **Report Analyzer**: Input blood test values and receive educational feedback
+- **Risk Assessment**: Calculate your personal disease risks using AI
 
 ## Requirements
 

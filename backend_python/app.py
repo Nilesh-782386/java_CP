@@ -422,6 +422,40 @@ def risk_assessment():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/parse-report-text', methods=['POST'])
+def parse_report_text():
+    """
+    Parse text from report (no OCR needed)
+    Request body: {"text": "report text content"}
+    """
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+        
+        # Use OCR module's text parsing (no image processing needed)
+        extracted_values = report_ocr.extract_values_from_text(text)
+        
+        return jsonify({
+            "success": True,
+            "extractedValues": extracted_values,
+            "ocrText": text[:1000],  # Return first 1000 chars for reference
+            "message": f"Successfully extracted {len(extracted_values)} parameter(s) from text"
+        })
+    except Exception as e:
+        print(f"Error parsing report text: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "extractedValues": {},
+            "message": f"Failed to parse text: {str(e)}"
+        }), 500
+
+
 @app.route('/api/upload-report-image', methods=['POST'])
 def upload_report_image():
     """

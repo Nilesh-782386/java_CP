@@ -60,28 +60,7 @@ public class RiskAssessmentView extends BorderPane {
     private TextField sleepHoursField;
     private ComboBox<String> stressLevelCombo;
     private ComboBox<String> dietQualityCombo;
-    private TextField vegetableServingsField;
-    private TextField processedMealsField;
-    private TextField hydrationField;
-    private ComboBox<String> caffeineIntakeCombo;
-    private TextField moderateActivityField;
-    private TextField vigorousActivityField;
-    private TextField strengthSessionsField;
-    private TextField sedentaryHoursField;
-    private ComboBox<String> sleepQualityCombo;
-    private ComboBox<String> sleepConsistencyCombo;
     private CheckBox snoringCheckBox;
-    private ComboBox<String> stressCopingCombo;
-    private TextField workHoursField;
-    private ComboBox<String> moodStabilityCombo;
-    private ComboBox<String> medicationAdherenceCombo;
-    private CheckBox medicationSideEffectsCheckBox;
-    private ComboBox<String> smokingIntensityCombo;
-    private CheckBox vapingCheckBox;
-    private ComboBox<String> environmentExposureCombo;
-    private CheckBox shiftWorkCheckBox;
-    private TextField lastCheckupField;
-    private ComboBox<String> vaccinationStatusCombo;
     private ListView<String> symptomsList;
     private ObservableList<String> selectedSymptoms;
     private ListView<String> familyHistoryList;
@@ -171,35 +150,12 @@ public class RiskAssessmentView extends BorderPane {
         basicInfoLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
         basicInfoLabel.setTextFill(Color.web("#0F766E"));
 
-        HBox ageBox = new HBox(10);
-        ageBox.setAlignment(Pos.CENTER_LEFT);
-        Label ageLabel = new Label("Age (years):");
-        ageLabel.setMinWidth(120);
         ageField = new TextField();
-        ageField.setPromptText("e.g., 45");
-        ageField.setPrefWidth(150);
-        HBox.setHgrow(ageField, Priority.ALWAYS);
-        ageBox.getChildren().addAll(ageLabel, ageField);
-
-        HBox weightBox = new HBox(10);
-        weightBox.setAlignment(Pos.CENTER_LEFT);
-        Label weightLabel = new Label("Weight (kg):");
-        weightLabel.setMinWidth(120);
         weightField = new TextField();
-        weightField.setPromptText("e.g., 75");
-        weightField.setPrefWidth(150);
-        HBox.setHgrow(weightField, Priority.ALWAYS);
-        weightBox.getChildren().addAll(weightLabel, weightField);
-
-        HBox heightBox = new HBox(10);
-        heightBox.setAlignment(Pos.CENTER_LEFT);
-        Label heightLabel = new Label("Height (cm):");
-        heightLabel.setMinWidth(120);
         heightField = new TextField();
-        heightField.setPromptText("e.g., 170");
-        heightField.setPrefWidth(150);
-        HBox.setHgrow(heightField, Priority.ALWAYS);
-        heightBox.getChildren().addAll(heightLabel, heightField);
+        HBox ageBox = createTextFieldRow("Age (years):", 120, ageField, "e.g., 45", 150);
+        HBox weightBox = createTextFieldRow("Weight (kg):", 120, weightField, "e.g., 75", 150);
+        HBox heightBox = createTextFieldRow("Height (cm):", 120, heightField, "e.g., 170", 150);
 
         basicInfoBox.getChildren().addAll(basicInfoLabel, ageBox, weightBox, heightBox);
 
@@ -212,303 +168,33 @@ public class RiskAssessmentView extends BorderPane {
         smokingCheckBox = new CheckBox("Smoking");
         smokingCheckBox.setFont(Font.font("System", 13));
 
-        HBox exerciseBox = new HBox(10);
-        exerciseBox.setAlignment(Pos.CENTER_LEFT);
-        Label exerciseLabel = new Label("Exercise Level:");
-        exerciseLabel.setMinWidth(120);
         exerciseCombo = new ComboBox<>();
-        exerciseCombo.getItems().addAll("None", "Moderate", "High");
-        exerciseCombo.setValue("Moderate");
-        exerciseCombo.setPrefWidth(150);
-        HBox.setHgrow(exerciseCombo, Priority.ALWAYS);
-        exerciseBox.getChildren().addAll(exerciseLabel, exerciseCombo);
-
-        HBox alcoholBox = new HBox(10);
-        alcoholBox.setAlignment(Pos.CENTER_LEFT);
-        Label alcoholLabel = new Label("Alcohol:");
-        alcoholLabel.setMinWidth(120);
         alcoholCombo = new ComboBox<>();
-        alcoholCombo.getItems().addAll("None", "Moderate", "Heavy");
-        alcoholCombo.setValue("None");
-        alcoholCombo.setPrefWidth(150);
-        HBox.setHgrow(alcoholCombo, Priority.ALWAYS);
-        alcoholBox.getChildren().addAll(alcoholLabel, alcoholCombo);
-
-        HBox sleepBox = new HBox(10);
-        sleepBox.setAlignment(Pos.CENTER_LEFT);
-        Label sleepLabel = new Label("Sleep (hours/night):");
-        sleepLabel.setMinWidth(120);
         sleepHoursField = new TextField();
-        sleepHoursField.setPromptText("e.g., 7.5");
-        sleepHoursField.setPrefWidth(150);
-        HBox.setHgrow(sleepHoursField, Priority.ALWAYS);
-        sleepBox.getChildren().addAll(sleepLabel, sleepHoursField);
-
-        HBox stressBox = new HBox(10);
-        stressBox.setAlignment(Pos.CENTER_LEFT);
-        Label stressLabel = new Label("Stress Level:");
-        stressLabel.setMinWidth(120);
         stressLevelCombo = new ComboBox<>();
-        stressLevelCombo.getItems().addAll("Low", "Moderate", "High");
-        stressLevelCombo.setValue("Moderate");
-        stressLevelCombo.setPrefWidth(150);
-        HBox.setHgrow(stressLevelCombo, Priority.ALWAYS);
-        stressBox.getChildren().addAll(stressLabel, stressLevelCombo);
-
-        HBox dietBox = new HBox(10);
-        dietBox.setAlignment(Pos.CENTER_LEFT);
-        Label dietLabel = new Label("Diet Quality:");
-        dietLabel.setMinWidth(120);
         dietQualityCombo = new ComboBox<>();
-        dietQualityCombo.getItems().addAll("Poor", "Moderate", "Good");
-        dietQualityCombo.setValue("Moderate");
-        dietQualityCombo.setPrefWidth(150);
-        HBox.setHgrow(dietQualityCombo, Priority.ALWAYS);
-        dietBox.getChildren().addAll(dietLabel, dietQualityCombo);
-
-        Label nutritionDetailLabel = new Label("Nutrition & Hydration Details");
-        nutritionDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-        nutritionDetailLabel.setTextFill(Color.web("#0F172A"));
-
-        HBox vegetableBox = new HBox(10);
-        vegetableBox.setAlignment(Pos.CENTER_LEFT);
-        Label vegetableLabel = new Label("Fruit & Veg servings/day:");
-        vegetableLabel.setMinWidth(180);
-        vegetableServingsField = new TextField();
-        vegetableServingsField.setPromptText("e.g., 4");
-        vegetableServingsField.setPrefWidth(120);
-        vegetableBox.getChildren().addAll(vegetableLabel, vegetableServingsField);
-
-        HBox processedBox = new HBox(10);
-        processedBox.setAlignment(Pos.CENTER_LEFT);
-        Label processedLabel = new Label("Processed meals/week:");
-        processedLabel.setMinWidth(180);
-        processedMealsField = new TextField();
-        processedMealsField.setPromptText("e.g., 2");
-        processedMealsField.setPrefWidth(120);
-        processedBox.getChildren().addAll(processedLabel, processedMealsField);
-
-        HBox hydrationBox = new HBox(10);
-        hydrationBox.setAlignment(Pos.CENTER_LEFT);
-        Label hydrationLabel = new Label("Water intake (glasses/day):");
-        hydrationLabel.setMinWidth(180);
-        hydrationField = new TextField();
-        hydrationField.setPromptText("e.g., 8");
-        hydrationField.setPrefWidth(120);
-        hydrationBox.getChildren().addAll(hydrationLabel, hydrationField);
-
-        HBox caffeineBox = new HBox(10);
-        caffeineBox.setAlignment(Pos.CENTER_LEFT);
-        Label caffeineLabel = new Label("Caffeine intake:");
-        caffeineLabel.setMinWidth(180);
-        caffeineIntakeCombo = new ComboBox<>();
-        caffeineIntakeCombo.getItems().addAll("None", "Low (≤1 cup/day)", "Moderate (2 cups/day)", "High (3+ cups/day)");
-        caffeineIntakeCombo.setValue("Moderate (2 cups/day)");
-        caffeineIntakeCombo.setPrefWidth(200);
-        caffeineBox.getChildren().addAll(caffeineLabel, caffeineIntakeCombo);
-
-        Label activityDetailLabel = new Label("Physical Activity & Sedentary Pattern");
-        activityDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-        activityDetailLabel.setTextFill(Color.web("#0F172A"));
-
-        HBox moderateActivityBox = new HBox(10);
-        moderateActivityBox.setAlignment(Pos.CENTER_LEFT);
-        Label moderateActivityLabel = new Label("Moderate activity (min/week):");
-        moderateActivityLabel.setMinWidth(220);
-        moderateActivityField = new TextField();
-        moderateActivityField.setPromptText("e.g., 120");
-        moderateActivityField.setPrefWidth(140);
-        moderateActivityBox.getChildren().addAll(moderateActivityLabel, moderateActivityField);
-
-        HBox vigorousActivityBox = new HBox(10);
-        vigorousActivityBox.setAlignment(Pos.CENTER_LEFT);
-        Label vigorousActivityLabel = new Label("Vigorous activity (min/week):");
-        vigorousActivityLabel.setMinWidth(220);
-        vigorousActivityField = new TextField();
-        vigorousActivityField.setPromptText("e.g., 45");
-        vigorousActivityField.setPrefWidth(140);
-        vigorousActivityBox.getChildren().addAll(vigorousActivityLabel, vigorousActivityField);
-
-        HBox strengthBox = new HBox(10);
-        strengthBox.setAlignment(Pos.CENTER_LEFT);
-        Label strengthLabel = new Label("Strength sessions/week:");
-        strengthLabel.setMinWidth(220);
-        strengthSessionsField = new TextField();
-        strengthSessionsField.setPromptText("e.g., 2");
-        strengthSessionsField.setPrefWidth(140);
-        strengthBox.getChildren().addAll(strengthLabel, strengthSessionsField);
-
-        HBox sedentaryBox = new HBox(10);
-        sedentaryBox.setAlignment(Pos.CENTER_LEFT);
-        Label sedentaryLabel = new Label("Sitting time (hours/day):");
-        sedentaryLabel.setMinWidth(220);
-        sedentaryHoursField = new TextField();
-        sedentaryHoursField.setPromptText("e.g., 8");
-        sedentaryHoursField.setPrefWidth(140);
-        sedentaryBox.getChildren().addAll(sedentaryLabel, sedentaryHoursField);
-
-        Label sleepDetailLabel = new Label("Sleep Quality & Recovery");
-        sleepDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-        sleepDetailLabel.setTextFill(Color.web("#0F172A"));
-
-        HBox sleepQualityBox = new HBox(10);
-        sleepQualityBox.setAlignment(Pos.CENTER_LEFT);
-        Label sleepQualityLabel = new Label("Sleep quality rating:");
-        sleepQualityLabel.setMinWidth(180);
-        sleepQualityCombo = new ComboBox<>();
-        sleepQualityCombo.getItems().addAll("Poor", "Fair", "Good", "Excellent");
-        sleepQualityCombo.setValue("Good");
-        sleepQualityCombo.setPrefWidth(180);
-        sleepQualityBox.getChildren().addAll(sleepQualityLabel, sleepQualityCombo);
-
-        HBox sleepConsistencyBox = new HBox(10);
-        sleepConsistencyBox.setAlignment(Pos.CENTER_LEFT);
-        Label sleepConsistencyLabel = new Label("Sleep schedule consistency:");
-        sleepConsistencyLabel.setMinWidth(220);
-        sleepConsistencyCombo = new ComboBox<>();
-        sleepConsistencyCombo.getItems().addAll("Irregular", "Somewhat regular", "Consistent", "Highly consistent");
-        sleepConsistencyCombo.setValue("Somewhat regular");
-        sleepConsistencyCombo.setPrefWidth(200);
-        sleepConsistencyBox.getChildren().addAll(sleepConsistencyLabel, sleepConsistencyCombo);
+        HBox exerciseBox = createComboRow("Exercise Level:", 120, exerciseCombo,
+            List.of("None", "Moderate", "High"), "Moderate", 150);
+        HBox alcoholBox = createComboRow("Alcohol:", 120, alcoholCombo,
+            List.of("None", "Moderate", "Heavy"), "None", 150);
+        HBox sleepBox = createTextFieldRow("Sleep (hours/night):", 120, sleepHoursField, "e.g., 7.5", 150);
+        HBox stressBox = createComboRow("Stress Level:", 120, stressLevelCombo,
+            List.of("Low", "Moderate", "High"), "Moderate", 150);
+        HBox dietBox = createComboRow("Diet Quality:", 120, dietQualityCombo,
+            List.of("Poor", "Moderate", "Good"), "Moderate", 150);
 
         snoringCheckBox = new CheckBox("Snoring or suspected apnea symptoms");
         snoringCheckBox.setFont(Font.font("System", 13));
 
-        Label mentalDetailLabel = new Label("Stress & Mental Wellbeing");
-        mentalDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-        mentalDetailLabel.setTextFill(Color.web("#0F172A"));
-
-        HBox stressCopingBox = new HBox(10);
-        stressCopingBox.setAlignment(Pos.CENTER_LEFT);
-        Label stressCopingLabel = new Label("Stress coping ability:");
-        stressCopingLabel.setMinWidth(200);
-        stressCopingCombo = new ComboBox<>();
-        stressCopingCombo.getItems().addAll("Struggling", "Managing", "Strong toolkit");
-        stressCopingCombo.setValue("Managing");
-        stressCopingCombo.setPrefWidth(180);
-        stressCopingBox.getChildren().addAll(stressCopingLabel, stressCopingCombo);
-
-        HBox workHoursBox = new HBox(10);
-        workHoursBox.setAlignment(Pos.CENTER_LEFT);
-        Label workHoursLabel = new Label("Average work hours/week:");
-        workHoursLabel.setMinWidth(220);
-        workHoursField = new TextField();
-        workHoursField.setPromptText("e.g., 45");
-        workHoursField.setPrefWidth(140);
-        workHoursBox.getChildren().addAll(workHoursLabel, workHoursField);
-
-        HBox moodBox = new HBox(10);
-        moodBox.setAlignment(Pos.CENTER_LEFT);
-        Label moodLabel = new Label("Mood stability:");
-        moodLabel.setMinWidth(180);
-        moodStabilityCombo = new ComboBox<>();
-        moodStabilityCombo.getItems().addAll("Low", "Variable", "Stable", "Very stable");
-        moodStabilityCombo.setValue("Stable");
-        moodStabilityCombo.setPrefWidth(160);
-        moodBox.getChildren().addAll(moodLabel, moodStabilityCombo);
-
-        Label medicationDetailLabel = new Label("Medication & Preventive Care");
-        medicationDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-        medicationDetailLabel.setTextFill(Color.web("#0F172A"));
-
-        HBox medicationAdherenceBox = new HBox(10);
-        medicationAdherenceBox.setAlignment(Pos.CENTER_LEFT);
-        Label medicationAdherenceLabel = new Label("Medication adherence:");
-        medicationAdherenceLabel.setMinWidth(200);
-        medicationAdherenceCombo = new ComboBox<>();
-        medicationAdherenceCombo.getItems().addAll("Rarely follow plan", "Miss doses sometimes", "Mostly adherent", "Always on schedule");
-        medicationAdherenceCombo.setValue("Mostly adherent");
-        medicationAdherenceCombo.setPrefWidth(220);
-        medicationAdherenceBox.getChildren().addAll(medicationAdherenceLabel, medicationAdherenceCombo);
-
-        medicationSideEffectsCheckBox = new CheckBox("Experiencing medication side effects");
-        medicationSideEffectsCheckBox.setFont(Font.font("System", 13));
-
-        HBox lastCheckupBox = new HBox(10);
-        lastCheckupBox.setAlignment(Pos.CENTER_LEFT);
-        Label lastCheckupLabel = new Label("Last full check-up (months):");
-        lastCheckupLabel.setMinWidth(220);
-        lastCheckupField = new TextField();
-        lastCheckupField.setPromptText("e.g., 12");
-        lastCheckupField.setPrefWidth(140);
-        lastCheckupBox.getChildren().addAll(lastCheckupLabel, lastCheckupField);
-
-        HBox vaccinationBox = new HBox(10);
-        vaccinationBox.setAlignment(Pos.CENTER_LEFT);
-        Label vaccinationLabel = new Label("Vaccination status:");
-        vaccinationLabel.setMinWidth(200);
-        vaccinationStatusCombo = new ComboBox<>();
-        vaccinationStatusCombo.getItems().addAll("Unsure / overdue", "Partially up to date", "Fully up to date");
-        vaccinationStatusCombo.setValue("Partially up to date");
-        vaccinationStatusCombo.setPrefWidth(200);
-        vaccinationBox.getChildren().addAll(vaccinationLabel, vaccinationStatusCombo);
-
-        Label exposureDetailLabel = new Label("Substance & Environment Exposure");
-        exposureDetailLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-        exposureDetailLabel.setTextFill(Color.web("#0F172A"));
-
-        HBox smokingIntensityBox = new HBox(10);
-        smokingIntensityBox.setAlignment(Pos.CENTER_LEFT);
-        Label smokingIntensityLabel = new Label("Smoking intensity:");
-        smokingIntensityLabel.setMinWidth(200);
-        smokingIntensityCombo = new ComboBox<>();
-        smokingIntensityCombo.getItems().addAll("None", "Occasional (<5/day)", "Daily (5-10/day)", "Heavy (>10/day)");
-        smokingIntensityCombo.setValue("None");
-        smokingIntensityCombo.setPrefWidth(200);
-        smokingIntensityBox.getChildren().addAll(smokingIntensityLabel, smokingIntensityCombo);
-
-        vapingCheckBox = new CheckBox("Currently vaping or using e-cigarettes");
-        vapingCheckBox.setFont(Font.font("System", 13));
-
-        HBox environmentExposureBox = new HBox(10);
-        environmentExposureBox.setAlignment(Pos.CENTER_LEFT);
-        Label environmentExposureLabel = new Label("Work/environment exposure:");
-        environmentExposureLabel.setMinWidth(220);
-        environmentExposureCombo = new ComboBox<>();
-        environmentExposureCombo.getItems().addAll("Low exposure", "Moderate exposure", "High exposure");
-        environmentExposureCombo.setValue("Moderate exposure");
-        environmentExposureCombo.setPrefWidth(200);
-        environmentExposureBox.getChildren().addAll(environmentExposureLabel, environmentExposureCombo);
-
-        shiftWorkCheckBox = new CheckBox("Shift work / rotating night shifts");
-        shiftWorkCheckBox.setFont(Font.font("System", 13));
-
         lifestyleBox.getChildren().addAll(
             lifestyleLabel,
             smokingCheckBox,
-            smokingIntensityBox,
-            vapingCheckBox,
             exerciseBox,
             alcoholBox,
             dietBox,
-            nutritionDetailLabel,
-            vegetableBox,
-            processedBox,
-            hydrationBox,
-            caffeineBox,
-            activityDetailLabel,
-            moderateActivityBox,
-            vigorousActivityBox,
-            strengthBox,
-            sedentaryBox,
-            sleepDetailLabel,
             sleepBox,
-            sleepQualityBox,
-            sleepConsistencyBox,
             snoringCheckBox,
-            mentalDetailLabel,
-            stressBox,
-            stressCopingBox,
-            workHoursBox,
-            moodBox,
-            medicationDetailLabel,
-            medicationAdherenceBox,
-            medicationSideEffectsCheckBox,
-            lastCheckupBox,
-            vaccinationBox,
-            exposureDetailLabel,
-            environmentExposureBox,
-            shiftWorkCheckBox
+            stressBox
         );
 
         // Symptoms Section
@@ -861,109 +547,39 @@ public class RiskAssessmentView extends BorderPane {
         }
     }
 
-    private Double parseOptionalDouble(TextField field, double min, double max, String fieldName) {
-        String text = field.getText() != null ? field.getText().trim() : "";
-        if (text.isEmpty()) {
-            return null;
+    private HBox createTextFieldRow(String labelText, double labelWidth, TextField field, String prompt, double fieldWidth) {
+        HBox box = new HBox(10);
+        box.setAlignment(Pos.CENTER_LEFT);
+        Label label = new Label(labelText);
+        label.setMinWidth(labelWidth);
+        if (prompt != null && !prompt.isEmpty()) {
+            field.setPromptText(prompt);
         }
-        try {
-            double value = Double.parseDouble(text);
-            if (value < min || value > max) {
-                showError("Invalid " + fieldName, fieldName + " must be between " + min + " and " + max + ".");
-                throw new IllegalArgumentException("Invalid " + fieldName);
-            }
-            return value;
-        } catch (NumberFormatException ex) {
-            showError("Invalid " + fieldName, "Please enter a valid number for " + fieldName + ".");
-            throw new IllegalArgumentException("Invalid " + fieldName);
-        }
+        field.setPrefWidth(fieldWidth);
+        HBox.setHgrow(field, Priority.ALWAYS);
+        box.getChildren().addAll(label, field);
+        return box;
     }
 
-    private Integer parseOptionalInteger(TextField field, int min, int max, String fieldName) {
-        String text = field.getText() != null ? field.getText().trim() : "";
-        if (text.isEmpty()) {
-            return null;
+    private HBox createComboRow(String labelText, double labelWidth, ComboBox<String> combo,
+                                List<String> options, String defaultValue, double comboWidth) {
+        HBox box = new HBox(10);
+        box.setAlignment(Pos.CENTER_LEFT);
+        Label label = new Label(labelText);
+        label.setMinWidth(labelWidth);
+        combo.getItems().setAll(options);
+        if (defaultValue != null) {
+            combo.setValue(defaultValue);
         }
-        try {
-            int value = Integer.parseInt(text);
-            if (value < min || value > max) {
-                showError("Invalid " + fieldName, fieldName + " must be between " + min + " and " + max + ".");
-                throw new IllegalArgumentException("Invalid " + fieldName);
-            }
-            return value;
-        } catch (NumberFormatException ex) {
-            showError("Invalid " + fieldName, "Please enter a valid whole number for " + fieldName + ".");
-            throw new IllegalArgumentException("Invalid " + fieldName);
-        }
+        combo.setPrefWidth(comboWidth);
+        HBox.setHgrow(combo, Priority.ALWAYS);
+        box.getChildren().addAll(label, combo);
+        return box;
     }
 
     private Map<String, Object> collectLifestyleInputs() {
         Map<String, Object> data = new HashMap<>();
-        try {
-            Double vegetables = parseOptionalDouble(vegetableServingsField, 0, 12, "Fruit & vegetable servings per day");
-            if (vegetables != null) {
-                data.put("vegetable_servings", vegetables);
-            }
-
-            Integer processedMeals = parseOptionalInteger(processedMealsField, 0, 30, "Processed meals per week");
-            if (processedMeals != null) {
-                data.put("processed_meals_per_week", processedMeals);
-            }
-
-            Double hydration = parseOptionalDouble(hydrationField, 0, 20, "Water intake (glasses per day)");
-            if (hydration != null) {
-                data.put("hydration_glasses", hydration);
-            }
-
-            Integer moderateActivity = parseOptionalInteger(moderateActivityField, 0, 1000, "Moderate activity minutes");
-            if (moderateActivity != null) {
-                data.put("moderate_activity_minutes", moderateActivity);
-            }
-
-            Integer vigorousActivity = parseOptionalInteger(vigorousActivityField, 0, 1000, "Vigorous activity minutes");
-            if (vigorousActivity != null) {
-                data.put("vigorous_activity_minutes", vigorousActivity);
-            }
-
-            Integer strengthSessions = parseOptionalInteger(strengthSessionsField, 0, 28, "Strength sessions per week");
-            if (strengthSessions != null) {
-                data.put("strength_training_sessions", strengthSessions);
-            }
-
-            Double sedentaryHours = parseOptionalDouble(sedentaryHoursField, 0, 24, "Sitting time (hours per day)");
-            if (sedentaryHours != null) {
-                data.put("sedentary_hours", sedentaryHours);
-            }
-
-            Double workHours = parseOptionalDouble(workHoursField, 0, 120, "Work hours per week");
-            if (workHours != null) {
-                data.put("work_hours", workHours);
-            }
-
-            Integer lastCheckupMonths = parseOptionalInteger(lastCheckupField, 0, 300, "Months since last check-up");
-            if (lastCheckupMonths != null) {
-                data.put("last_checkup_months", lastCheckupMonths);
-            }
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
-
-        data.put("caffeine_intake", Math.max(0, caffeineIntakeCombo.getSelectionModel().getSelectedIndex()));
-        data.put("sleep_quality", Math.max(0, sleepQualityCombo.getSelectionModel().getSelectedIndex()));
-        data.put("sleep_consistency", Math.max(0, sleepConsistencyCombo.getSelectionModel().getSelectedIndex()));
         data.put("snoring", snoringCheckBox.isSelected() ? 1 : 0);
-        data.put("stress_coping", Math.max(0, stressCopingCombo.getSelectionModel().getSelectedIndex()));
-        data.put("mood_stability", Math.max(0, moodStabilityCombo.getSelectionModel().getSelectedIndex()));
-        data.put("medication_adherence", Math.max(0, medicationAdherenceCombo.getSelectionModel().getSelectedIndex()));
-        data.put("medication_side_effects", medicationSideEffectsCheckBox.isSelected() ? 1 : 0);
-
-        int smokingIntensityIndex = Math.max(0, smokingIntensityCombo.getSelectionModel().getSelectedIndex());
-        data.put("smoking_intensity", smokingCheckBox.isSelected() ? smokingIntensityIndex : 0);
-        data.put("vaping", vapingCheckBox.isSelected() ? 1 : 0);
-        data.put("environmental_exposure", Math.max(0, environmentExposureCombo.getSelectionModel().getSelectedIndex()));
-        data.put("shift_work", shiftWorkCheckBox.isSelected() ? 1 : 0);
-        data.put("vaccination_status", Math.max(0, vaccinationStatusCombo.getSelectionModel().getSelectedIndex()));
-
         return data;
     }
 

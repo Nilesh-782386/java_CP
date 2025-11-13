@@ -13,6 +13,8 @@ import javafx.scene.layout.StackPane;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -102,11 +104,26 @@ public class ReportAnalyzerView extends BorderPane {
         Separator separator = new Separator();
         separator.setStyle("-fx-background-color: #E5E7EB;");
         
-        Label uploadLabel = new Label("📷 Upload Report Image");
+        Label uploadLabel = new Label("📷 Quick Input Options");
         uploadLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         uploadLabel.setTextFill(Color.web("#0F766E"));
         
-        Button uploadImageButton = new Button("📤 Upload & Scan Image");
+        // Option 1: Paste Text (No OCR needed)
+        Button pasteTextButton = new Button("📋 Paste Report Text");
+        pasteTextButton.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, #10B981, #34D399); " +
+            "-fx-text-fill: white; " +
+            "-fx-font-weight: bold; " +
+            "-fx-font-size: 13px; " +
+            "-fx-padding: 8 15; " +
+            "-fx-cursor: hand;"
+        );
+        pasteTextButton.setPrefWidth(Double.MAX_VALUE);
+        pasteTextButton.setTooltip(new Tooltip("Paste text from your report to automatically extract values (No OCR needed)"));
+        pasteTextButton.setOnAction(e -> showPasteTextDialog());
+        
+        // Option 2: Upload Image (OCR - requires Tesseract)
+        Button uploadImageButton = new Button("📤 Upload & Scan Image (OCR)");
         uploadImageButton.setStyle(
             "-fx-background-color: linear-gradient(to bottom, #8B5CF6, #A78BFA); " +
             "-fx-text-fill: white; " +
@@ -116,7 +133,7 @@ public class ReportAnalyzerView extends BorderPane {
             "-fx-cursor: hand;"
         );
         uploadImageButton.setPrefWidth(Double.MAX_VALUE);
-        uploadImageButton.setTooltip(new Tooltip("Upload a photo of your blood test report to automatically extract values"));
+        uploadImageButton.setTooltip(new Tooltip("Upload a photo of your report (Requires Tesseract OCR installed)"));
         uploadImageButton.setOnAction(e -> uploadAndScanImage());
         
         Label orLabel = new Label("OR");
@@ -194,6 +211,7 @@ public class ReportAnalyzerView extends BorderPane {
             panelTitle, 
             separator,
             uploadLabel,
+            pasteTextButton,
             uploadImageButton,
             orLabel,
             manualLabel,
@@ -559,6 +577,141 @@ public class ReportAnalyzerView extends BorderPane {
         }).start();
     }
 
+    private void showPasteTextDialog() {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Paste Report Text");
+        dialog.setHeaderText("Paste the text from your blood test report below");
+        
+        TextArea textArea = new TextArea();
+        textArea.setPromptText("Paste your report text here...\nExample:\nHemoglobin: 14.5 g/dL\nWBC: 7000 cells/µL\nPlatelets: 250000 cells/µL");
+        textArea.setWrapText(true);
+        textArea.setPrefRowCount(10);
+        textArea.setPrefColumnCount(40);
+        
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(15));
+        vbox.getChildren().addAll(
+            new Label("Copy and paste the text from your report:"),
+            textArea
+        );
+        
+        dialog.getDialogPane().setContent(vbox);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                return textArea.getText();
+            }
+            return null;
+        });
+        
+        dialog.showAndWait().ifPresent(text -> {
+            if (text != null && !text.trim().isEmpty()) {
+                processPastedText(text);
+            }
+        });
+    }
+    
+    private void processPastedText(String text) {
+        loadingIndicator.setVisible(true);
+        analyzeButton.setDisable(true);
+        
+        NotificationHelper.showInfoNotification(
+            (StackPane) getScene().getRoot(),
+            "Extracting values from text... Please wait."
+        );
+        
+        new Thread(() -> {
+            try {
+                // Send text to backend for parsing
+                Map<String, Object> result = apiClient.parseReportText(text);
+                
+                Platform.runLater(() -> {
+                    loadingIndicator.setVisible(false);
+                    analyzeButton.setDisable(false);
+                    
+                    Boolean success = (Boolean) result.get("success");
+                    if (success != null && success) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> extractedValues = (Map<String, Object>) result.get("extractedValues");
+                        
+                        renderOcrSummary(extractedValues, text);
+
+                        if (extractedValues != null && !extractedValues.isEmpty()) {
+                            // Populate input fields with extracted values
+                            int populatedCount = 0;
+                            for (Map.Entry<String, Object> entry : extractedValues.entrySet()) {
+                                String paramKey = entry.getKey();
+                                Object value = entry.getValue();
+                                
+                                TextField field = inputFields.get(paramKey);
+                                if (field != null && value != null) {
+                                    field.setText(String.valueOf(value));
+                                    populatedCount++;
+                                }
+                            }
+                            
+                            NotificationHelper.showSuccessNotification(
+                                (StackPane) getScene().getRoot(),
+                                "Successfully extracted " + populatedCount + " parameter(s) from text!"
+                            );
+                            
+                            // Optionally auto-analyze when required values present
+                            if (hasAllRequiredValues(extractedValues)) {
+                                Platform.runLater(this::analyzeReport);
+                            } else if (populatedCount > 0) {
+                                NotificationHelper.showInfoNotification(
+                                    (StackPane) getScene().getRoot(),
+                                    "Some required parameters are still missing. Please review highlighted fields before analysis."
+                                );
+                            }
+                        } else {
+                            NotificationHelper.showInfoNotification(
+                                (StackPane) getScene().getRoot(),
+                                "No values could be extracted. Please enter values manually."
+                            );
+                        }
+                    } else {
+                        String errorMsg = (String) result.get("message");
+                        if (errorMsg == null) {
+                            errorMsg = (String) result.get("error");
+                        }
+                        clearOcrSummary();
+                        showError("Text Processing Failed", 
+                            "Failed to extract values from text:\n" + errorMsg + 
+                            "\n\nPlease ensure the text contains parameter names and values.\n" +
+                            "You can still enter values manually.");
+                    }
+                });
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    loadingIndicator.setVisible(false);
+                    analyzeButton.setDisable(false);
+                    
+                    String errorMsg = "Failed to process text:\n" + e.getMessage();
+                    if (e.getMessage().contains("Connection refused") || 
+                        e.getMessage().contains("timeout")) {
+                        errorMsg += "\n\nBackend Connection Issue:\n" +
+                                   "1. Ensure Python backend is running on port 5000\n" +
+                                   "2. Check: http://localhost:5000/api/parse-report-text in browser";
+                    }
+                    
+                    clearOcrSummary();
+                    showError("Processing Error", errorMsg);
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    loadingIndicator.setVisible(false);
+                    analyzeButton.setDisable(false);
+                    clearOcrSummary();
+                    showError("Error", 
+                        "An error occurred while processing the text:\n" + e.getMessage() + 
+                        "\n\nYou can still enter values manually.");
+                });
+            }
+        }).start();
+    }
+    
     private void renderOcrSummary(Map<String, Object> extractedValues, String ocrText) {
         if (ocrSummaryBox == null || ocrValuesGrid == null) {
             return;

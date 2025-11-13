@@ -142,7 +142,8 @@ class MedicalChatbot:
             "symptoms", "treatment", "prevention", "medicine", "medication", "disease",
             "condition", "health", "fever", "cough", "headache", "pain", "fatigue",
             "diabetes", "hypertension", "asthma", "allergy", "exercise", "diet",
-            "vitamin", "supplement", "sleep", "stress", "immunity", "cure", "therapy"
+            "vitamin", "supplement", "sleep", "stress", "immunity", "cure", "therapy",
+            "lifestyle", "improve", "wellness", "healthy living", "better health"
         ]
         
         is_valid = any(category in user_lower for category in valid_categories)
@@ -202,8 +203,8 @@ class MedicalChatbot:
         top_indices = np.argsort(similarities)[-3:][::-1]
         top_scores = similarities[top_indices]
         
-        # If good match found (threshold: 0.25 for ML, lower than keyword matching)
-        if best_score > 0.25:
+        # If good match found (threshold: 0.20 for ML to catch more lifestyle queries)
+        if best_score > 0.20:
             best_match = self.knowledge_base[best_match_idx]
             
             # Enhance answer with context from similar entries if score is high
@@ -252,18 +253,40 @@ class MedicalChatbot:
             # Check keywords
             keywords = entry.get('keywords', [])
             score = 0
+            matched_keywords = 0
+            
             for keyword in keywords:
-                if keyword.lower() in user_message_lower:
+                keyword_lower = keyword.lower()
+                # Exact match gets full score
+                if keyword_lower in user_message_lower:
                     score += 1.0
+                    matched_keywords += 1
+                # Partial match (word boundary) gets partial score
+                elif any(word in user_message_lower for word in keyword_lower.split()):
+                    score += 0.5
+                    matched_keywords += 1
+            
+            # Also check question text for matches
+            question_lower = entry.get('question', '').lower()
+            question_words = set(question_lower.split())
+            user_words = set(user_message_lower.split())
+            common_words = question_words.intersection(user_words)
+            if len(common_words) > 0 and len(user_words) > 0:
+                question_score = len(common_words) / max(len(user_words), 1)
+                score += question_score * 0.3
             
             if keywords:
-                score = score / len(keywords)
+                # Normalize by number of keywords, but reward partial matches
+                normalized_score = score / max(len(keywords), 1)
+            else:
+                normalized_score = score
             
-            if score > best_score:
-                best_score = score
+            if normalized_score > best_score:
+                best_score = normalized_score
                 best_match = entry
         
-        if best_match and best_score > 0.3:
+        # Lower threshold to 0.2 to catch more lifestyle queries
+        if best_match and best_score > 0.2:
             related_topics = self._find_related_topics(best_match['category'])
             return {
                 "answer": best_match['answer'],
@@ -470,5 +493,101 @@ class MedicalChatbot:
                 "keywords": ["hand hygiene", "handwashing", "wash hands", "clean hands"],
                 "question": "Why is hand hygiene important?",
                 "answer": "Proper handwashing prevents the spread of infections and diseases. Wash hands with soap and water for at least 20 seconds, especially before eating, after using the bathroom, and after coughing or sneezing. Use hand sanitizer when soap isn't available."
+            },
+            {
+                "category": "Prevention",
+                "keywords": ["lifestyle", "improve lifestyle", "better lifestyle", "healthy lifestyle", "lifestyle improvement", "change lifestyle", "lifestyle tips", "wellness", "healthy living"],
+                "question": "How to improve my lifestyle?",
+                "answer": "Improving your lifestyle involves making positive changes across multiple areas of your life. Here's a comprehensive guide:\n\n**1. Nutrition & Diet:**\n• Eat a balanced diet with plenty of fruits, vegetables, whole grains, and lean proteins\n• Limit processed foods, sugar, and unhealthy fats\n• Stay hydrated - drink 8 glasses of water daily\n• Practice portion control and mindful eating\n• Consider consulting a nutritionist for personalized advice\n\n**2. Physical Activity:**\n• Aim for at least 150 minutes of moderate-intensity exercise per week (30 mins, 5 days)\n• Include both cardio (walking, cycling, swimming) and strength training\n• Find activities you enjoy to stay motivated\n• Start slowly and gradually increase intensity\n• Take breaks from sitting - move every hour\n\n**3. Sleep Quality:**\n• Maintain a regular sleep schedule (7-9 hours per night)\n• Create a comfortable sleep environment (dark, quiet, cool)\n• Avoid screens 1 hour before bed\n• Limit caffeine and alcohol, especially in the evening\n• Establish a relaxing bedtime routine\n\n**4. Stress Management:**\n• Practice relaxation techniques (meditation, deep breathing, yoga)\n• Exercise regularly to reduce stress\n• Maintain social connections with friends and family\n• Set realistic goals and priorities\n• Consider professional help if stress is overwhelming\n\n**5. Mental Health:**\n• Practice mindfulness and gratitude\n• Engage in hobbies and activities you enjoy\n• Limit social media and screen time\n• Seek professional help when needed\n• Build a support network\n\n**6. Preventive Care:**\n• Get regular health checkups and screenings\n• Stay up to date with vaccinations\n• Monitor your health metrics (blood pressure, weight, etc.)\n• Don't ignore symptoms - consult healthcare providers\n\n**7. Healthy Habits:**\n• Quit smoking and limit alcohol consumption\n• Practice good hygiene (handwashing, dental care)\n• Protect yourself from sun exposure\n• Maintain a healthy weight (BMI 18.5-25)\n• Avoid risky behaviors\n\n**8. Work-Life Balance:**\n• Set boundaries between work and personal time\n• Take regular breaks and vacations\n• Manage your time effectively\n• Prioritize self-care\n\n**Tips for Success:**\n• Start with small, achievable changes\n• Focus on one area at a time\n• Track your progress\n• Be patient - lifestyle changes take time\n• Celebrate small victories\n• Don't be too hard on yourself if you slip up\n\nRemember: Improving your lifestyle is a journey, not a destination. Make gradual, sustainable changes that you can maintain long-term. Consult healthcare providers for personalized advice based on your specific health needs."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["heart disease", "coronary heart disease", "heart attack", "cardiac disease", "heart problem", "cardiovascular disease", "chest pain heart"],
+                "question": "What is heart disease and how to prevent it?",
+                "answer": "Heart disease (cardiovascular disease) refers to conditions affecting the heart and blood vessels, including coronary artery disease, heart attacks, and heart failure.\n\n**Common Symptoms:**\n• Chest pain or discomfort (angina)\n• Shortness of breath\n• Fatigue and weakness\n• Irregular heartbeat\n• Swelling in legs, ankles, or feet\n• Dizziness or fainting\n\n**Risk Factors:**\n• High blood pressure\n• High cholesterol\n• Smoking\n• Diabetes\n• Obesity\n• Family history\n• Age (men over 45, women over 55)\n• Sedentary lifestyle\n\n**Prevention & Lifestyle:**\n• Maintain healthy blood pressure (<120/80 mmHg)\n• Control cholesterol levels (LDL <100 mg/dL)\n• Quit smoking completely\n• Exercise regularly (150 mins/week)\n• Heart-healthy diet: fruits, vegetables, whole grains, lean proteins\n• Limit saturated fats, trans fats, and sodium\n• Maintain healthy weight (BMI 18.5-25)\n• Manage stress\n• Limit alcohol (1-2 drinks/day max)\n• Get regular checkups\n\n**Treatment (Prescription Required):**\n• Statins for cholesterol\n• Blood pressure medications (ACE inhibitors, beta-blockers)\n• Aspirin (low-dose, as prescribed)\n• Blood thinners if needed\n• Surgery (angioplasty, bypass) for severe cases\n\n⚠️ **Emergency:** If you experience severe chest pain, call emergency services immediately. Early treatment saves lives."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["stroke", "brain stroke", "cerebral stroke", "stroke symptoms", "brain attack"],
+                "question": "What are stroke symptoms and how to prevent stroke?",
+                "answer": "A stroke occurs when blood flow to the brain is interrupted, causing brain cells to die. It's a medical emergency.\n\n**Stroke Symptoms (FAST):**\n• **F**ace: Drooping on one side\n• **A**rms: Weakness or numbness in one arm\n• **S**peech: Slurred or difficulty speaking\n• **T**ime: Call emergency immediately\n\n**Other Symptoms:**\n• Sudden severe headache\n• Vision problems\n• Dizziness or loss of balance\n• Confusion\n• Numbness on one side of body\n\n**Prevention:**\n• Control high blood pressure (most important)\n• Manage diabetes\n• Lower cholesterol\n• Quit smoking\n• Limit alcohol\n• Exercise regularly\n• Maintain healthy weight\n• Eat heart-healthy diet\n• Manage atrial fibrillation (irregular heartbeat)\n• Take prescribed medications (aspirin, blood thinners if needed)\n\n**Treatment (Emergency):**\n• Immediate medical care is critical\n• Clot-busting medications (if given within 3-4 hours)\n• Surgery may be needed\n• Rehabilitation after stroke\n\n⚠️ **CRITICAL:** If you suspect a stroke, call emergency services immediately. Every minute counts!"
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["obesity", "overweight", "weight problem", "excessive weight", "bmi high"],
+                "question": "What is obesity and how to manage it?",
+                "answer": "Obesity is a medical condition where excess body fat accumulates to the extent that it may negatively affect health. BMI ≥30 indicates obesity.\n\n**Health Risks:**\n• Heart disease and stroke\n• Type 2 diabetes\n• High blood pressure\n• Sleep apnea\n• Certain cancers\n• Joint problems\n• Fatty liver disease\n• Depression\n\n**Causes:**\n• Poor diet (high-calorie, processed foods)\n• Lack of physical activity\n• Genetics\n• Medical conditions (hypothyroidism, PCOS)\n• Medications\n• Psychological factors\n\n**Management & Treatment:**\n• **Diet:**\n  - Calorie-controlled, balanced diet\n  - More fruits, vegetables, whole grains\n  - Limit processed foods, sugar, unhealthy fats\n  - Portion control\n  - Consider consulting a dietitian\n\n• **Exercise:**\n  - Start with 150 mins/week moderate activity\n  - Gradually increase to 300 mins/week\n  - Include strength training\n  - Find activities you enjoy\n\n• **Lifestyle:**\n  - Get adequate sleep (7-9 hours)\n  - Manage stress\n  - Set realistic goals (1-2 lbs/week weight loss)\n  - Track food intake and activity\n\n• **Medical Treatment (Prescription):**\n  - Orlistat (fat blocker)\n  - GLP-1 agonists: Liraglutide, Semaglutide\n  - Phentermine-topiramate (appetite suppressant)\n  - Bariatric surgery for severe cases (BMI ≥40)\n\n⚠️ **Important:** Consult a healthcare provider for personalized weight management plan. Rapid weight loss can be dangerous."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["depression", "depressed", "sadness", "feeling down", "mental depression", "mood disorder"],
+                "question": "What are depression symptoms and how to treat it?",
+                "answer": "Depression is a mental health disorder characterized by persistent sadness, loss of interest, and other symptoms that affect daily life.\n\n**Common Symptoms:**\n• Persistent sadness, anxiety, or emptiness\n• Loss of interest in activities once enjoyed\n• Fatigue and decreased energy\n• Difficulty concentrating or making decisions\n• Changes in sleep (insomnia or oversleeping)\n• Changes in appetite or weight\n• Feelings of worthlessness or guilt\n• Thoughts of death or suicide\n• Irritability or restlessness\n\n**Treatment:**\n• **Therapy:**\n  - Cognitive Behavioral Therapy (CBT)\n  - Interpersonal therapy\n  - Psychotherapy\n\n• **Medications (Prescription Required):**\n  - SSRIs: Sertraline, Fluoxetine, Escitalopram\n  - SNRIs: Venlafaxine, Duloxetine\n  - Atypical antidepressants: Bupropion, Mirtazapine\n  - May take 4-6 weeks to see effects\n\n• **Lifestyle:**\n  - Regular exercise (30 mins, 3-5 times/week)\n  - Healthy diet\n  - Adequate sleep\n  - Stress management\n  - Social support\n  - Avoid alcohol and drugs\n\n⚠️ **CRITICAL:** If you have thoughts of suicide, seek immediate help. Call a crisis hotline or go to emergency room. Depression is treatable - don't suffer alone."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["anxiety", "anxiety disorder", "panic attack", "worried", "nervous", "anxious", "panic disorder"],
+                "question": "What are anxiety symptoms and how to manage anxiety?",
+                "answer": "Anxiety disorders involve excessive worry, fear, or nervousness that interferes with daily activities.\n\n**Common Symptoms:**\n• Excessive worry or fear\n• Restlessness or feeling on edge\n• Fatigue\n• Difficulty concentrating\n• Irritability\n• Muscle tension\n• Sleep problems\n• Panic attacks (rapid heartbeat, sweating, trembling)\n• Avoidance of anxiety-provoking situations\n\n**Types:**\n• Generalized Anxiety Disorder (GAD)\n• Panic Disorder\n• Social Anxiety Disorder\n• Phobias\n\n**Treatment:**\n• **Therapy:**\n  - Cognitive Behavioral Therapy (CBT)\n  - Exposure therapy\n  - Relaxation techniques\n\n• **Medications (Prescription):**\n  - SSRIs: Sertraline, Paroxetine, Escitalopram\n  - SNRIs: Venlafaxine, Duloxetine\n  - Benzodiazepines (short-term): Alprazolam, Lorazepam\n  - Buspirone (for GAD)\n\n• **Self-Help:**\n  - Deep breathing exercises\n  - Meditation and mindfulness\n  - Regular exercise\n  - Limit caffeine and alcohol\n  - Adequate sleep\n  - Stress management\n  - Support groups\n\n⚠️ **Seek professional help** if anxiety significantly impacts your daily life. Treatment is effective."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["osteoporosis", "bone loss", "weak bones", "bone density", "fracture risk"],
+                "question": "What is osteoporosis and how to prevent it?",
+                "answer": "Osteoporosis is a condition where bones become weak and brittle, increasing fracture risk.\n\n**Risk Factors:**\n• Age (especially postmenopausal women)\n• Gender (women more at risk)\n• Family history\n• Low body weight\n• Smoking and excessive alcohol\n• Lack of exercise\n• Low calcium/vitamin D intake\n• Certain medications (steroids)\n\n**Prevention:**\n• **Calcium:** 1000-1200 mg daily (dairy, leafy greens, fortified foods)\n• **Vitamin D:** 600-800 IU daily (sunlight, supplements, fatty fish)\n• **Exercise:** Weight-bearing (walking, jogging) and strength training\n• **Lifestyle:** Quit smoking, limit alcohol\n• **Medications (if needed):**\n  - Bisphosphonates: Alendronate, Risedronate\n  - Hormone therapy (for postmenopausal women)\n  - Denosumab (injection)\n\n**Screening:**\n• Bone density scan (DEXA) recommended for:\n  - Women 65+ and men 70+\n  - Postmenopausal women with risk factors\n  - Anyone with fractures from minor trauma\n\n⚠️ **Important:** Early detection and treatment can prevent fractures. Consult your doctor about screening."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["kidney disease", "kidney problem", "renal disease", "kidney failure", "chronic kidney disease", "ckd"],
+                "question": "What is kidney disease and how to prevent it?",
+                "answer": "Chronic kidney disease (CKD) is the gradual loss of kidney function over time.\n\n**Symptoms (often appear late):**\n• Fatigue and weakness\n• Swelling in legs, ankles, feet\n• Changes in urination (frequency, color)\n• Nausea and vomiting\n• Loss of appetite\n• Itchy skin\n• High blood pressure\n• Shortness of breath\n\n**Causes:**\n• Diabetes (most common)\n• High blood pressure\n• Glomerulonephritis\n• Polycystic kidney disease\n• Urinary tract obstruction\n• Recurrent kidney infections\n\n**Prevention:**\n• Control diabetes and blood sugar\n• Manage high blood pressure\n• Maintain healthy weight\n• Don't smoke\n• Limit NSAIDs (Ibuprofen, Naproxen)\n• Stay hydrated\n• Limit salt intake\n• Regular exercise\n• Get regular checkups\n\n**Treatment:**\n• Medications to control blood pressure and diabetes\n• Medications to reduce protein in urine\n• Dialysis (if kidney function severely impaired)\n• Kidney transplant (for end-stage disease)\n\n⚠️ **Important:** Early detection through regular checkups is crucial. Kidney disease is often silent in early stages."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["liver disease", "liver problem", "hepatitis", "fatty liver", "liver damage", "cirrhosis"],
+                "question": "What is liver disease and how to prevent it?",
+                "answer": "Liver disease includes various conditions affecting the liver, such as hepatitis, fatty liver, and cirrhosis.\n\n**Common Types:**\n• Fatty liver disease (NAFLD)\n• Hepatitis (A, B, C)\n• Cirrhosis\n• Liver cancer\n\n**Symptoms:**\n• Fatigue and weakness\n• Jaundice (yellowing of skin/eyes)\n• Abdominal pain and swelling\n• Dark urine\n• Pale stools\n• Nausea and vomiting\n• Loss of appetite\n• Itchy skin\n\n**Prevention:**\n• Limit alcohol consumption\n• Maintain healthy weight\n• Eat balanced diet (limit processed foods)\n• Exercise regularly\n• Get vaccinated (Hepatitis A & B)\n• Practice safe sex\n• Don't share needles\n• Avoid excessive medications\n• Protect against toxins\n\n**Treatment:**\n• Depends on cause:\n  - Antiviral medications for hepatitis\n  - Lifestyle changes for fatty liver\n  - Medications to manage complications\n  - Liver transplant in severe cases\n\n⚠️ **Important:** Early detection and treatment can prevent progression. Regular checkups and liver function tests are important."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["thyroid", "hypothyroidism", "hyperthyroidism", "underactive thyroid", "overactive thyroid", "thyroid problem"],
+                "question": "What are thyroid problems and how to treat them?",
+                "answer": "Thyroid disorders occur when the thyroid gland produces too much or too little hormone.\n\n**Hypothyroidism (Underactive Thyroid):**\n• **Symptoms:** Fatigue, weight gain, cold intolerance, dry skin, hair loss, depression, constipation\n• **Treatment:** Levothyroxine (Synthroid) - daily medication\n• **Causes:** Hashimoto's disease, iodine deficiency, medications\n\n**Hyperthyroidism (Overactive Thyroid):**\n• **Symptoms:** Weight loss, rapid heartbeat, anxiety, tremors, sweating, heat intolerance, sleep problems\n• **Treatment:**\n  - Antithyroid medications: Methimazole, Propylthiouracil\n  - Radioactive iodine therapy\n  - Surgery (in some cases)\n• **Causes:** Graves' disease, thyroid nodules\n\n**Prevention:**\n• Ensure adequate iodine intake (iodized salt, seafood)\n• Regular checkups\n• Be aware of family history\n\n**Diagnosis:**\n• Blood tests: TSH, T3, T4 levels\n• Physical examination\n• Imaging if needed\n\n⚠️ **Important:** Thyroid disorders require medical diagnosis and treatment. Don't self-medicate. Regular monitoring is essential."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["copd", "chronic obstructive pulmonary disease", "emphysema", "chronic bronchitis", "lung disease", "breathing problem chronic"],
+                "question": "What is COPD and how to manage it?",
+                "answer": "COPD (Chronic Obstructive Pulmonary Disease) is a chronic lung disease that makes breathing difficult.\n\n**Symptoms:**\n• Shortness of breath (especially during activity)\n• Chronic cough with mucus\n• Wheezing\n• Chest tightness\n• Frequent respiratory infections\n• Fatigue\n\n**Causes:**\n• Smoking (primary cause)\n• Long-term exposure to lung irritants\n• Air pollution\n• Genetic factors (alpha-1 antitrypsin deficiency)\n\n**Prevention:**\n• **Most important:** Quit smoking immediately\n• Avoid secondhand smoke\n• Reduce exposure to air pollution\n• Use protective equipment if exposed to dust/chemicals\n• Get flu and pneumonia vaccinations\n\n**Treatment:**\n• **Medications (Prescription):**\n  - Bronchodilators: Albuterol, Ipratropium (inhalers)\n  - Inhaled corticosteroids: Fluticasone, Budesonide\n  - Combination inhalers\n  - Oral medications: Theophylline, Roflumilast\n  - Antibiotics for infections\n\n• **Lifestyle:**\n  - Pulmonary rehabilitation\n  - Oxygen therapy (if needed)\n  - Regular exercise (as tolerated)\n  - Healthy diet\n  - Avoid lung irritants\n\n⚠️ **Critical:** If you smoke, quitting is the most important step. COPD is progressive but manageable with proper treatment."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["gerd", "acid reflux", "heartburn", "gastroesophageal reflux", "stomach acid", "reflux disease"],
+                "question": "What is GERD and how to treat it?",
+                "answer": "GERD (Gastroesophageal Reflux Disease) is chronic acid reflux where stomach acid flows back into the esophagus.\n\n**Symptoms:**\n• Heartburn (burning chest pain)\n• Regurgitation of food or sour liquid\n• Chest pain\n• Difficulty swallowing\n• Sensation of a lump in throat\n• Chronic cough\n• Hoarseness\n\n**Causes:**\n• Weak lower esophageal sphincter\n• Hiatal hernia\n• Obesity\n• Pregnancy\n• Certain foods and medications\n• Smoking\n\n**Treatment:**\n• **Lifestyle Changes:**\n  - Avoid trigger foods (spicy, fatty, acidic, chocolate, caffeine)\n  - Eat smaller, more frequent meals\n  - Don't lie down immediately after eating\n  - Elevate head of bed\n  - Lose weight if overweight\n  - Quit smoking\n  - Limit alcohol\n\n• **Medications:**\n  - Antacids: Tums, Rolaids (quick relief)\n  - H2 blockers: Ranitidine, Famotidine (reduce acid production)\n  - Proton pump inhibitors: Omeprazole, Esomeprazole, Pantoprazole (strongest, prescription)\n\n⚠️ **See a doctor if:** Symptoms persist despite lifestyle changes, you have difficulty swallowing, or experience chest pain (could be heart-related)."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["ibs", "irritable bowel syndrome", "stomach cramps", "bowel problem", "digestive issue chronic"],
+                "question": "What is IBS and how to manage it?",
+                "answer": "IBS (Irritable Bowel Syndrome) is a common disorder affecting the large intestine.\n\n**Symptoms:**\n• Abdominal pain and cramping\n• Bloating and gas\n• Diarrhea or constipation (or alternating)\n• Mucus in stool\n• Urgency to have bowel movement\n\n**Triggers:**\n• Certain foods (dairy, beans, cabbage, carbonated drinks)\n• Stress\n• Hormonal changes\n• Other gastrointestinal infections\n\n**Management:**\n• **Diet (FODMAP diet may help):**\n  - Identify and avoid trigger foods\n  - Increase fiber gradually\n  - Stay hydrated\n  - Eat regular meals\n  - Limit caffeine and alcohol\n\n• **Lifestyle:**\n  - Regular exercise\n  - Stress management (meditation, yoga)\n  - Adequate sleep\n  - Keep a food diary\n\n• **Medications:**\n  - Fiber supplements: Psyllium, Methylcellulose\n  - Antispasmodics: Hyoscyamine, Dicyclomine\n  - Laxatives (for constipation): Polyethylene glycol\n  - Anti-diarrheal: Loperamide\n  - Antidepressants (low-dose, for pain): Amitriptyline\n\n⚠️ **See a doctor** for proper diagnosis. IBS symptoms can overlap with other conditions. There's no cure, but symptoms can be managed."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["migraine", "migraine headache", "severe headache", "headache with aura", "chronic migraine"],
+                "question": "What is a migraine and how to treat it?",
+                "answer": "Migraine is a neurological condition causing severe, recurring headaches often with other symptoms.\n\n**Symptoms:**\n• Throbbing or pulsing pain (usually one side)\n• Sensitivity to light, sound, or smells\n• Nausea and vomiting\n• Visual disturbances (aura) - flashing lights, blind spots\n• Dizziness\n• Fatigue\n\n**Triggers:**\n• Stress\n• Hormonal changes\n• Certain foods (chocolate, cheese, processed meats)\n• Alcohol (especially red wine)\n• Caffeine (too much or withdrawal)\n• Sleep changes\n• Weather changes\n• Strong smells\n\n**Treatment:**\n• **Acute Treatment:**\n  - NSAIDs: Ibuprofen 400-600mg, Naproxen 500mg\n  - Triptans: Sumatriptan, Rizatriptan (prescription)\n  - Combination: Acetaminophen + Aspirin + Caffeine\n  - Anti-nausea: Metoclopramide, Prochlorperazine\n\n• **Prevention:**\n  - Beta-blockers: Propranolol, Metoprolol\n  - Antidepressants: Amitriptyline\n  - Anticonvulsants: Topiramate, Valproate\n  - CGRP inhibitors (newer, for chronic migraines)\n\n• **Lifestyle:**\n  - Identify and avoid triggers\n  - Regular sleep schedule\n  - Stress management\n  - Regular exercise\n  - Stay hydrated\n  - Magnesium supplements (400-600mg daily) may help\n\n⚠️ **See a doctor** if migraines are frequent, severe, or don't respond to over-the-counter medications."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["pcos", "polycystic ovary syndrome", "irregular periods", "hormonal imbalance women", "ovarian cysts"],
+                "question": "What is PCOS and how to manage it?",
+                "answer": "PCOS (Polycystic Ovary Syndrome) is a hormonal disorder common in women of reproductive age.\n\n**Symptoms:**\n• Irregular or absent periods\n• Excess androgen (male hormone) - excess hair, acne\n• Polycystic ovaries\n• Weight gain or difficulty losing weight\n• Insulin resistance\n• Infertility\n• Thinning hair on scalp\n\n**Causes:**\n• Exact cause unknown\n• Insulin resistance\n• Genetics\n• Inflammation\n\n**Management:**\n• **Lifestyle:**\n  - Weight loss (even 5-10% can help)\n  - Low-carb or Mediterranean diet\n  - Regular exercise\n  - Stress management\n\n• **Medications:**\n  - Birth control pills (regulate periods, reduce androgen)\n  - Metformin (improve insulin sensitivity)\n  - Anti-androgens: Spironolactone (reduce excess hair)\n  - Fertility medications if trying to conceive\n\n• **Supplements:**\n  - Inositol (may improve insulin sensitivity)\n  - Vitamin D\n  - Omega-3 fatty acids\n\n⚠️ **Important:** PCOS requires medical diagnosis and management. Early treatment can prevent long-term complications like diabetes and heart disease."
+            },
+            {
+                "category": "Symptoms",
+                "keywords": ["anemia", "low iron", "iron deficiency", "low hemoglobin", "tired blood"],
+                "question": "What is anemia and how to treat it?",
+                "answer": "Anemia is a condition where you don't have enough healthy red blood cells to carry oxygen to your tissues.\n\n**Symptoms:**\n• Fatigue and weakness\n• Pale skin\n• Shortness of breath\n• Dizziness or lightheadedness\n• Cold hands and feet\n• Headaches\n• Irregular heartbeat\n• Brittle nails\n\n**Common Causes:**\n• Iron deficiency (most common)\n• Vitamin B12 deficiency\n• Folate deficiency\n• Chronic diseases\n• Blood loss\n\n**Treatment:**\n• **Iron Deficiency Anemia:**\n  - Iron supplements: Ferrous sulfate 325mg daily (with vitamin C for absorption)\n  - Iron-rich foods: red meat, spinach, beans, fortified cereals\n  - May take 2-3 months to correct\n\n• **Vitamin B12 Deficiency:**\n  - B12 supplements or injections\n  - B12-rich foods: meat, fish, dairy, fortified cereals\n\n• **Folate Deficiency:**\n  - Folic acid supplements\n  - Folate-rich foods: leafy greens, citrus fruits, beans\n\n**Prevention:**\n• Eat balanced diet with iron-rich foods\n• Include vitamin C with iron-rich meals\n• Consider supplements if at risk (pregnant women, vegetarians)\n\n⚠️ **See a doctor** for proper diagnosis. Don't self-treat with iron supplements without testing, as excess iron can be harmful."
             }
         ]

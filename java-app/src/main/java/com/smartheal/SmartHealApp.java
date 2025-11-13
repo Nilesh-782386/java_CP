@@ -1,5 +1,4 @@
 package com.smartheal;
-
 import com.smartheal.api.ApiClient;
 import com.smartheal.components.AboutDialog;
 import com.smartheal.components.QuickStatsPanel;
@@ -50,7 +49,6 @@ public class SmartHealApp extends Application {
     // Module views (lazy loaded)
     private SymptomCheckerView symptomCheckerView;
     private HealthChatbotView chatbotView;
-    private TestLookupView testLookupView;
     private CostEstimatorView costEstimatorView;
     private ReportAnalyzerView reportAnalyzerView;
     private RiskAssessmentView riskAssessmentView;
@@ -213,10 +211,6 @@ public class SmartHealApp extends Application {
             System.out.println("Health Chatbot callback triggered!");
             Platform.runLater(() -> openHealthChatbot());
         });
-        dashboardView.setOnTestLookupClick(() -> {
-            System.out.println("Test Lookup callback triggered!");
-            Platform.runLater(() -> openTestLookup());
-        });
         dashboardView.setOnCostEstimatorClick(() -> {
             System.out.println("Cost Estimator callback triggered!");
             Platform.runLater(() -> openCostEstimator());
@@ -289,21 +283,6 @@ public class SmartHealApp extends Application {
             "Health Chatbot",
             "💬",
             chatbotView,
-            this::backToDashboard
-        );
-        
-        switchToModule(wrapper);
-    }
-
-    private void openTestLookup() {
-        if (testLookupView == null) {
-            testLookupView = new TestLookupView(apiClient);
-        }
-        
-        ModulePageWrapper wrapper = new ModulePageWrapper(
-            "Test Lookup",
-            "🔍",
-            testLookupView,
             this::backToDashboard
         );
         
@@ -486,9 +465,9 @@ public class SmartHealApp extends Application {
             "Features:\n" +
             "1. Symptom Checker - Select symptoms to get AI-powered condition analysis\n" +
             "2. Health Chatbot - Ask medical questions and get AI responses\n" +
-            "3. Test Lookup - Find recommended medical tests for diseases\n" +
-            "4. Cost Estimator - Estimate treatment costs for different hospital types\n" +
-            "5. Report Analyzer - Analyze blood test reports with AI insights\n\n" +
+            "3. Cost Estimator - Estimate treatment costs for different hospital types\n" +
+            "4. Report Analyzer - Analyze blood test reports with AI insights\n" +
+            "5. Risk Assessment - Calculate your personal disease risks using AI\n\n" +
             "Note: Ensure Python backend is running on port 5000 for full functionality."
         );
         alert.showAndWait();

@@ -187,23 +187,6 @@ public class ApiClient {
         }
     }
 
-    // Get test recommendations
-    public TestRecommendation getTestRecommendations(String diseaseId) throws IOException {
-        HttpGet request = new HttpGet(BASE_URL + "/tests/" + diseaseId);
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
-            String json;
-            try {
-                json = EntityUtils.toString(response.getEntity());
-            } catch (Exception e) {
-                throw new IOException("Failed to parse response: " + e.getMessage(), e);
-            }
-            if (response.getCode() >= 400) {
-                throw new IOException("API Error: " + json);
-            }
-            return objectMapper.readValue(json, TestRecommendation.class);
-        }
-    }
-
     // Estimate cost
     public CostEstimation estimateCost(String treatmentType, String hospitalType) throws IOException {
         HttpPost request = new HttpPost(BASE_URL + "/estimate-cost");
@@ -312,6 +295,30 @@ public class ApiClient {
         }
     }
 
+    public Map<String, Object> parseReportText(String text) throws IOException {
+        HttpPost request = new HttpPost(BASE_URL + "/parse-report-text");
+        request.setHeader("Content-Type", "application/json");
+        
+        Map<String, String> payload = new HashMap<>();
+        payload.put("text", text);
+        
+        String jsonPayload = objectMapper.writeValueAsString(payload);
+        request.setEntity(new StringEntity(jsonPayload, ContentType.APPLICATION_JSON));
+        
+        try (CloseableHttpResponse response = httpClient.execute(request)) {
+            String json;
+            try {
+                json = EntityUtils.toString(response.getEntity());
+            } catch (org.apache.hc.core5.http.ParseException e) {
+                throw new IOException("Failed to parse response: " + e.getMessage(), e);
+            }
+            if (response.getCode() >= 400) {
+                throw new IOException("API Error: " + json);
+            }
+            return objectMapper.readValue(json, Map.class);
+        }
+    }
+    
     public void close() throws IOException {
         if (httpClient != null) {
             httpClient.close();
